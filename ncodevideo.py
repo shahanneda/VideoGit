@@ -12,6 +12,7 @@ batcmd="git status"
 commit1="700043f"
 commit2="3f8d661"
 
+
 frame_rate = 30;
 class ncodevideo:
     def run_system_command(self, command):
@@ -33,6 +34,7 @@ class ncodevideo:
             except:
                 print("Failed to open file: " + file_path);
                 continue;
+            print(diff_of_file);
             self.handle_file_diffs(inital_file, diff_of_file)
 
 
@@ -45,21 +47,24 @@ class ncodevideo:
 
 
         lines_without_diff = lines_of_diffs;
-        lines_to_be_removed = {}; # we need to store this so we can add them later
+        changed_lines_dict = {}; # we need to store this so we can add them later
+
+        removed_lines_indices = []; # this keeps track of the index of all the lines were going to remove
 
 
-        for i, line in enumerate(lines_of_diffs):
-            if(len(line) > 0 and line[0] == "+"): # remove the lines that have addidiotsn, were going to add them later
-                line = line[1:]
-                lines_to_be_removed[i] =  line;
-
+        for i, line in enumerate(lines_of_diffs): # first remove all of the - lines, so we dont mess up the line numbers
             if(len(line) > 0 and line[0] == "-"): # remove the -  
-                lines_without_diff[i] = line[1:];
+                line = line[1:]
+                changed_lines_dict[i] = line;
+
+            elif(len(line) > 0 and line[0] == "+"): # remove the lines that have addidiotsn, were going to add them later
+                line = line[1:]
+                changed_lines_dict[i] =  line;
 
 
-        # remove all the lines queed up in lines_to_be_removed (the + ones)
-        lines_without_diff = [line for i, line in enumerate(lines_without_diff) if i not in lines_to_be_removed] 
-        self.handle_file_incrementing(lines_without_diff, lines_to_be_removed, file_name);
+        # remove all the lines queed up in changed_lines_dict (the + ones)
+        lines_without_diff = [line for i, line in enumerate(lines_without_diff) if i not in changed_lines_dict] 
+        self.handle_file_incrementing(lines_without_diff, changed_lines_dict, file_name);
 
 
 
@@ -100,7 +105,7 @@ class ncodevideo:
 
     def convert_images_to_video(self, file_name):
 
-        ffmpeg.input(f'{temp_location}/*.png', pattern_type='glob', framerate=5).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
+        ffmpeg.input(f'{temp_location}/{file_name}*.png', pattern_type='glob', framerate=5).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
         # self.run_system_command("
 
 
