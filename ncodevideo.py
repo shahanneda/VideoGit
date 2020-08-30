@@ -19,21 +19,40 @@ class ncodevideo:
         
 
     def loopThroughFilePaths(self, filePaths, startingCommit, endingCommit):
-        print(filePaths);
         for filePath in filePaths:
             try:
                 initalFile = self.runSystemCommand(f"git show {startingCommit}:{filePath}");
-                diffOfFile = self.runSystemCommand(f"git diff {filePath} {startingCommit}..{endingCommit}")
+                diffOfFile = self.runSystemCommand(f"git diff {startingCommit}..{endingCommit} {filePath}")
             except:
                 print("Failed to open file: " + filePath);
                 continue;
+            self.handleFileDiffs(initalFile, diffOfFile)
 
-            print(initalFile)
-            print(diffOfFile);
-
-        print(filePaths);
 
     
+    def handleFileDiffs(self, initalFile, diffOfFile):
+        linesOfDiffs = str.split(diffOfFile, "\n");
+
+        linesWithoutDiff = linesOfDiffs;
+        linesToBeRemoved = [];
+
+        for i, line in enumerate(linesOfDiffs):
+            if(len(line) > 0 and line[0] == "+"):
+                linesToBeRemoved.append(i);
+
+            if(len(line) > 0 and line[0] == "-"):
+                pass
+                # linesWithoutDiff[i] = line[2:];
+
+
+        print(linesToBeRemoved);
+        for lineIndex in linesToBeRemoved:
+            linesWithoutDiff.pop(lineIndex);
+
+
+        print(linesWithoutDiff);
+        
+
     
 
 
