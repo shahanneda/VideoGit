@@ -15,6 +15,7 @@ commit2="7d1633a"
 
 wpm = 480;
 chars_per_second = wpm * 5 / 60; #5 char/word * 1min/60sec
+up_down_space = 20;
 
 
 frame_rate = 30;
@@ -38,7 +39,6 @@ class ncodevideo:
             except:
                 print("Failed to open file: " + file_path);
                 continue;
-            print(diff_of_file);
             self.handle_file_diffs(diff_of_file)
 
 
@@ -97,23 +97,22 @@ class ncodevideo:
             number_of_frames_needed = int((len(line) / chars_per_second) * frame_rate); # how many frames needed to add/remove line
             for i in range(0,number_of_frames_needed, math.ceil(frames_per_char)):
                 if line_number in indices_of_lines_to_be_removed: # check if its marked to be removed
-                    # # handle not deling the whole line if we dont have too
-                    # if line_number+1 in lines_to_be_added:
-                    #
-                    #     next_added_line_after_this = lines_to_be_added[line_number+1];
-                    #     # we are a substirng of next line(and from), menaing we should stop removing, 
-                    #     if line in next_added_line_after_this and next_added_line_after_this.index(line) == 0: 
-                    #         file_in_list_form[line_number] = "" # remove the current line
-                    #         file_in_list_form[line_number+1] = line; # add ourself to the next line instantly
-                    #         print(next_added_line_after_this.index(line));
-                    #         lines_to_be_added[line_number+1] = next_added_line_after_this[len(line):] # remove this line from the next line to be added, since were not going to remove it and we already put it there
-                    #         print(f"Original {line}\n,  After: {lines_to_be_added[line_number+1]}\n\n\n");
-                    #
-                    #         break # do not remove anymore
 
-
+                    # handle not deling the whole line if we dont have too
                     # if our line is a substring of a line to be added, stop removing, and change the adding to how much we have
-                    # handle_image_creation_remove_line();
+                    if line_number+1 in lines_to_be_added:
+                        next_added_line_after_this = lines_to_be_added[line_number+1];
+                        # we are a substirng of next line(and from), menaing we should stop removing, 
+                        if line in next_added_line_after_this and next_added_line_after_this.index(line) == 0: 
+                            file_in_list_form[line_number] = "" # remove the current line
+                            file_in_list_form[line_number+1] = line; # add ourself to the next line instantly
+                            print(next_added_line_after_this.index(line));
+                            lines_to_be_added[line_number+1] = next_added_line_after_this[len(line):] # remove this line from the next line to be added, since were not going to remove it and we already put it there
+                            print(f"Original {line}\n,  After: {lines_to_be_added[line_number+1]}\n\n\n");
+
+                            break # do not remove anymore
+
+
                     if len(line) >0:
                         line = line[:-1]; # remove last chharater
                         file_in_list_form[line_number] = line;
@@ -123,7 +122,9 @@ class ncodevideo:
                         line = line[1:] # remove first char since we already addded it
 
                 full_code = list(filter(None, file_in_list_form)) # remove the "" marker used before
+                full_code = full_code[max(0, (line_number - up_down_space)):(line_number + up_down_space)]; # only show the seciton we are changing, not the entire file
                 full_code = "\n".join(full_code); # add newlines and make it in to string
+                # print("\n\n\n\n" + full_code);
                 full_code = re.sub(r'@@(.*?)@@', "", full_code); # this regex is to remove the git hulls which are @@ int ... @@
 
                 # find longest line so we space all images evenly
@@ -145,14 +146,13 @@ class ncodevideo:
     
     def convert_completed_code_to_video(self, completed_code_buffer, file_name, frames_per_char, longest_line):
         real_frame_rate = frame_rate/ frames_per_char;
-        print(real_frame_rate);
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images
-            new_line_count = code.count("\n");
-            extra_lines_needed = longest_line - new_line_count;
-            while extra_lines_needed > 0:
-                code += "\n";
-                extra_lines_needed -=1;
+            # new_line_count = code.count("\n");
+            # extra_lines_needed = longest_line - new_line_count;
+            # while extra_lines_needed > 0:
+            #     code += "\n";
+            #     extra_lines_needed -=1;
             self.make_image_from_code(code, file_name, i, frames_per_char)
 
             #progress bar
