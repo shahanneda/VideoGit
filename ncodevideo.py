@@ -49,33 +49,37 @@ class ncodevideo:
         lines_without_diff = lines_of_diffs;
         changed_lines_dict = {}; # we need to store this so we can add them later
 
-        removed_lines_indices = []; # this keeps track of the index of all the lines were going to remove
+        indices_of_lines_to_be_removed = []; # this keeps track of the index of all the lines were going to remove
 
 
         for i, line in enumerate(lines_of_diffs): # first remove all of the - lines, so we dont mess up the line numbers
             if(len(line) > 0 and line[0] == "-"): # remove the -  
-                line = line[1:]
-                changed_lines_dict[i] = line;
+                line = line[1:]; # remove the -
+                changed_lines_dict[i] = line; # add it to thhe list keeping track
+                indices_of_lines_to_be_removed.append[i]; # special marker for later so we know to remove the line
 
             elif(len(line) > 0 and line[0] == "+"): # remove the lines that have addidiotsn, were going to add them later
                 line = line[1:]
                 changed_lines_dict[i] =  line;
 
 
-        # remove all the lines queed up in changed_lines_dict (the + ones)
+        # remove all the lines queed up in changed_lines_dict 
         lines_without_diff = [line for i, line in enumerate(lines_without_diff) if i not in changed_lines_dict] 
-        self.handle_file_incrementing(lines_without_diff, changed_lines_dict, file_name);
+        self.handle_file_incrementing(lines_without_diff, changed_lines_dict,indices_of_lines_to_be_removed, file_name);
 
 
 
-    def handle_file_incrementing(self, file_in_list_form, lines_to_be_added, file_name):
+    def handle_file_incrementing(self, file_in_list_form, lines_to_be_added, indices_of_lines_to_be_removed, file_name):
         self.clean_temp_directory();
         index_of_images = 0; # for creating the video frames
         index_of_images+=1;
         completed_code_buffer = [];
         longestLine = 0;
 
-        for line_number, line in lines_to_be_added.items(): # add lines
+        for line_number, line in lines_to_be_added.items():
+            if line_number in indices_of_lines_to_be_removed: # check if its marked to be removed
+                continue; # we dont need to add it if it is marked to be remove TODO: add remove animation
+
             file_in_list_form = file_in_list_form[:line_number] + [line] + file_in_list_form[line_number:] # add line
             full_code = "\n".join(file_in_list_form);
             full_code = re.sub(r'@@(.*?)@@', "", full_code); # this regex is to remove the git hulls which are @@ int ... @@
