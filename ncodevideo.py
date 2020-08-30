@@ -54,17 +54,23 @@ class ncodevideo:
 
         for i, line in enumerate(lines_of_diffs): # first remove all of the - lines, so we dont mess up the line numbers
             if(len(line) > 0 and line[0] == "-"): # remove the -  
-                line = line[1:]; # remove the -
+                # line = line[1:]; # remove the -
                 changed_lines_dict[i] = line; # add it to thhe list keeping track
-                indices_of_lines_to_be_removed.append[i]; # special marker for later so we know to remove the line
+                indices_of_lines_to_be_removed.append(i); # special marker for later so we know to remove the line
 
             elif(len(line) > 0 and line[0] == "+"): # remove the lines that have addidiotsn, were going to add them later
-                line = line[1:]
+                # line = line[1:]
                 changed_lines_dict[i] =  line;
 
 
-        # remove all the lines queed up in changed_lines_dict 
-        lines_without_diff = [line for i, line in enumerate(lines_without_diff) if i not in changed_lines_dict] 
+        # remove all the lines queed up in changed_lines_dict , if it is in the change lines, we should remove it since we will ad it later, unless it is marked to be remved, then we should not remove it since we want to see it fade
+        for i, line in enumerate(lines_of_diffs):
+            if(i not in changed_lines_dict or i in indices_of_lines_to_be_removed):
+                lines_without_diff[i] = line;
+            else:
+               lines_without_diff[i] = ""; #put blank line since we will want to add it later and dont want to mess up the notation
+
+
         self.handle_file_incrementing(lines_without_diff, changed_lines_dict,indices_of_lines_to_be_removed, file_name);
 
 
@@ -78,10 +84,13 @@ class ncodevideo:
 
         for line_number, line in lines_to_be_added.items():
             if line_number in indices_of_lines_to_be_removed: # check if its marked to be removed
-                continue; # we dont need to add it if it is marked to be remove TODO: add remove animation
+                line = ""; # we set it to blank so it doesnt mess up the line numbers in the array
+                file_in_list_form[line_number] = "";
+            else:
+                file_in_list_form[line_number] = line # add line
 
-            file_in_list_form = file_in_list_form[:line_number] + [line] + file_in_list_form[line_number:] # add line
-            full_code = "\n".join(file_in_list_form);
+            full_code = list(filter(None, file_in_list_form)) # remove the "" marker used before
+            full_code = "\n".join(full_code); # add newlines and make it in to string
             full_code = re.sub(r'@@(.*?)@@', "", full_code); # this regex is to remove the git hulls which are @@ int ... @@
 
             # find longest line so we space all images evenly
@@ -90,7 +99,7 @@ class ncodevideo:
                 longestLine = newLineCount;
 
             completed_code_buffer.append(full_code);
-            
+
 
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images
@@ -99,7 +108,7 @@ class ncodevideo:
             while extraLinesNeeded > 0:
                 code += "\n";
                 extraLinesNeeded -=1;
-            
+
 
             self.make_image_from_code(code, file_name, i)
 
@@ -114,7 +123,7 @@ class ncodevideo:
 
 
     def make_image_from_code(self, code, file_name, index_of_image): # index is for the video file
-            # try:
+        # try:
         #     self.run_system_command("mkdir temp-img") # todo move this to its proper place
         # except:
         #     pass;
@@ -125,7 +134,8 @@ class ncodevideo:
 
     def clean_temp_directory(self):
         try:
-            self.run_system_command(f"rm {temp_location}/*.png");
+            # self.run_system_command(f"rm {temp_location}/*.png");
+            pass;
         except:
             pass;
 
