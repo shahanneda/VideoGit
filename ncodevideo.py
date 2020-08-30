@@ -59,6 +59,7 @@ class ncodevideo:
             if(len(line) > 0 and line[0] == "-"): # remove the -  
                 line = " " + line[1:]; # remove the -
                 changed_lines_dict[i] = line; # add it to thhe list keeping track
+                lines_without_diff[i] = line;
                 indices_of_lines_to_be_removed.append(i); # special marker for later so we know to remove the line
 
             elif(len(line) > 0 and line[0] == "+"): # remove the lines that have addidiotsn, were going to add them later
