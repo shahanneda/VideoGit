@@ -32,25 +32,30 @@ class ncodevideo:
     
     def handleFileDiffs(self, initalFile, diffOfFile):
         linesOfDiffs = str.split(diffOfFile, "\n");
+        linesOfDiffs = linesOfDiffs[5:] # remove the first 3 lines, becuase its just location info
 
         linesWithoutDiff = linesOfDiffs;
-        linesToBeRemoved = [];
+        linesToBeRemoved = []; # we need to store this so we can add them later
 
         for i, line in enumerate(linesOfDiffs):
-            if(len(line) > 0 and line[0] == "+"):
+            if(len(line) > 0 and line[0] == "+"): # remove the lines that have addidiotsn, were going to add them later
                 linesToBeRemoved.append(i);
 
-            if(len(line) > 0 and line[0] == "-"):
-                pass
-                # linesWithoutDiff[i] = line[2:];
+            if(len(line) > 0 and line[0] == "-"): # remove the -  
+                linesWithoutDiff[i] = line[1:];
+
+        # remove all the lines queed up in linesToBeRemoved (the + ones)
+        linesWithoutDiff = [line for i, line in enumerate(linesWithoutDiff) if i not in linesToBeRemoved] 
+
+        fullCode = "\n".join(linesWithoutDiff) + "\n\n\n\n";
+        
+        print(fullCode);
 
 
-        print(linesToBeRemoved);
-        for lineIndex in linesToBeRemoved:
-            linesWithoutDiff.pop(lineIndex);
+    # def makeImageFromCode(self, code, fileName, indexOfImage): # index is for the video file
+        
+        
 
-
-        print(linesWithoutDiff);
         
 
     
