@@ -13,11 +13,14 @@ class ncodevideo:
     def __init__(self):
         findChangedFilePaths = f"git diff --name-only {commit1}..{commit2}";
         filePaths = str.split(self.runSystemCommand(findChangedFilePaths), "\n");
-        self.loopThroughFiles(filePaths, commit1, commit2);
+        filePaths = list(filter(None, filePaths)) # remove empty strings
 
-    def loopThroughFiles(self, filePaths, startingCommit, endingCommit):
+        self.loopThroughFilePaths(filePaths, commit1, commit2);
+        
+
+    def loopThroughFilePaths(self, filePaths, startingCommit, endingCommit):
+        print(filePaths);
         for filePath in filePaths:
-            print(filePath)
             try:
                 initalFile =  self.runSystemCommand(f"git show {startingCommit}:{filePath}");
             except:
@@ -26,6 +29,7 @@ class ncodevideo:
 
             print(initalFile)
 
+        print(filePaths);
 
 
 
