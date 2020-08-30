@@ -94,8 +94,9 @@ class ncodevideo:
         real_frame_rate = frame_rate/ frames_per_char;
         print(f" framerate: {frame_rate}, frames_per_char: {frames_per_char} chars_per_second: {chars_per_second} real_frame_rate: {real_frame_rate}");
         for line_number, line in lines_to_be_added.items():
-            number_of_frames_needed = int((len(line) / chars_per_second) * frame_rate); # how many frames needed to add/remove line
-            for i in range(0,number_of_frames_needed, math.ceil(frames_per_char)):
+            # number_of_frames_needed = int((len(line) / chars_per_second) * frame_rate); # how many frames needed to add/remove line
+            # for i in range(0,number_of_frames_needed, math.ceil(frames_per_char)):
+            while len(line) > 0:
                 if line_number in indices_of_lines_to_be_removed: # check if its marked to be removed
 
                     # handle not deling the whole line if we dont have too
