@@ -2,69 +2,72 @@
 import subprocess
 
 
-getLogCommand = "git log --pretty=format:\"%h %s\"";
+get_log_command = "git log --pretty=format:\"%h %s\"";
+silicon_command = "silicon temp_code.txt --language cpp --output temp-img/";
 batcmd="git status"
 commit1="700043f"
 commit2="3f8d661"
 class ncodevideo:
-    def runSystemCommand(self, command):
+    def run_system_command(self, command):
         return subprocess.check_output(command, shell=True, text=True)
 
     def __init__(self):
-        findChangedFilePaths = f"git diff --name-only {commit1}..{commit2}";
-        filePaths = str.split(self.runSystemCommand(findChangedFilePaths), "\n");
-        filePaths = list(filter(None, filePaths)) # remove empty strings
+        find_changed_file_paths = f"git diff --name-only {commit1}..{commit2}";
+        file_paths = str.split(self.run_system_command(find_changed_file_paths), "\n");
+        file_paths = list(filter(None, file_paths)) # remove empty strings
 
-        self.loopThroughFilePaths(filePaths, commit1, commit2);
-        
+        self.loop_through_file_paths(file_paths, commit1, commit2);
 
-    def loopThroughFilePaths(self, filePaths, startingCommit, endingCommit):
-        for filePath in filePaths:
+
+    def loop_through_file_paths(self, file_paths, starting_commit, ending_commit):
+        for file_path in file_paths:
             try:
-                initalFile = self.runSystemCommand(f"git show {startingCommit}:{filePath}");
-                diffOfFile = self.runSystemCommand(f"git diff {startingCommit}..{endingCommit} {filePath}")
+                inital_file = self.run_system_command(f"git show {starting_commit}:{file_path}");
+                diff_of_file = self.run_system_command(f"git diff {starting_commit}..{ending_commit} {file_path}")
             except:
-                print("Failed to open file: " + filePath);
+                print("Failed to open file: " + file_path);
                 continue;
-            self.handleFileDiffs(initalFile, diffOfFile)
+            self.handle_file_diffs(inital_file, diff_of_file)
 
 
-    
-    def handleFileDiffs(self, initalFile, diffOfFile):
-        linesOfDiffs = str.split(diffOfFile, "\n");
-        linesOfDiffs = linesOfDiffs[5:] # remove the first 3 lines, becuase its just location info
+    def handle_file_diffs(self, inital_file, diff_of_file):
+        lines_of_diffs = str.split(diff_of_file, "\n");
+        file_name = lines_of_diffs[2][5:] # get second line (has filename) and remove the - space spcae
+        file_name = file_name.split("/")[len(file_name.split("/")) - 1] # remove the directory /gg/gg/g and just get the last part
 
-        linesWithoutDiff = linesOfDiffs;
-        linesToBeRemoved = []; # we need to store this so we can add them later
+        lines_of_diffs = lines_of_diffs[5:] # remove the first 3 lines, becuase its just location info
 
-        for i, line in enumerate(linesOfDiffs):
+
+        lines_without_diff = lines_of_diffs;
+        lines_to_be_removed = []; # we need to store this so we can add them later
+
+        for i, line in enumerate(lines_of_diffs):
             if(len(line) > 0 and line[0] == "+"): # remove the lines that have addidiotsn, were going to add them later
-                linesToBeRemoved.append(i);
+                lines_to_be_removed.append(i);
 
             if(len(line) > 0 and line[0] == "-"): # remove the -  
-                linesWithoutDiff[i] = line[1:];
+                lines_without_diff[i] = line[1:];
 
-        # remove all the lines queed up in linesToBeRemoved (the + ones)
-        linesWithoutDiff = [line for i, line in enumerate(linesWithoutDiff) if i not in linesToBeRemoved] 
+        # remove all the lines queed up in lines_to_be_removed (the + ones)
+        lines_without_diff = [line for i, line in enumerate(lines_without_diff) if i not in lines_to_be_removed] 
 
-        fullCode = "\n".join(linesWithoutDiff) + "\n\n\n\n";
-        
-        print(fullCode);
+        full_code = "\n".join(lines_without_diff);
 
-
-    # def makeImageFromCode(self, code, fileName, indexOfImage): # index is for the video file
-        
-        
-
-        
-
-    
+        # print(full_code)
+        # print(file_name)
+        self.make_image_from_code(full_code, file_name, 0);
 
 
 
-
-
-
+    def make_image_from_code(self, code, file_name, index_of_image): # index is for the video file
+        # try:
+        #     self.run_system_command("mkdir temp-img") # todo move this to its proper place
+        # except:
+        #     pass;
+        #TODO: use stdin to optimise
+        with open("temp_code.txt", "w") as text_file:
+            print(code, file=text_file, end="")
+        print(self.run_system_command(silicon_command + file_name + str(index_of_image) + ".png" ));
 
 
 nv = ncodevideo();
