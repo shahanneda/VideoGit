@@ -22,15 +22,19 @@ class ncodevideo:
         print(filePaths);
         for filePath in filePaths:
             try:
-                initalFile =  self.runSystemCommand(f"git show {startingCommit}:{filePath}");
+                initalFile = self.runSystemCommand(f"git show {startingCommit}:{filePath}");
+                diffOfFile = self.runSystemCommand(f"git diff {filePath} {startingCommit}..{endingCommit}")
             except:
                 print("Failed to open file: " + filePath);
                 continue;
 
             print(initalFile)
+            print(diffOfFile);
 
         print(filePaths);
 
+    
+    
 
 
 
