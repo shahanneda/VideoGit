@@ -5,7 +5,9 @@ import ffmpeg
 
 
 get_log_command = "git log --pretty=format:\"%h %s\"";
-silicon_command = "silicon temp_code.txt --language cpp --output temp-img/";
+temp_location = "temp-img"
+output_loc = temp_location;
+silicon_command = f"silicon temp_code.txt --language cpp --output {temp_location}/";
 batcmd="git status"
 commit1="700043f"
 commit2="3f8d661"
@@ -62,24 +64,47 @@ class ncodevideo:
 
 
     def handle_file_incrementing(self, file_in_list_form, lines_to_be_added, file_name):
+        self.clean_temp_directory();
         index_of_images = 0; # for creating the video frames
-        print(lines_to_be_added);
-        for line_number, line in lines_to_be_added.items():
-            print(line)
-            file_in_list_form = file_in_list_form[:line_number] + [line] + file_in_list_form[line_number:] # add line
+        index_of_images+=1;
+        completed_code_buffer = [];
+        longestLine = 0;
 
+        for line_number, line in lines_to_be_added.items(): # add lines
+            file_in_list_form = file_in_list_form[:line_number] + [line] + file_in_list_form[line_number:] # add line
             full_code = "\n".join(file_in_list_form);
             full_code = re.sub(r'@@(.*?)@@', "", full_code); # this regex is to remove the git hulls which are @@ int ... @@
-            index_of_images+=1;
 
-            self.make_image_from_code(full_code, file_name, index_of_images);
+            # find longest line so we space all images evenly
+            newLineCount = full_code.count("\n"); 
+            if newLineCount > longestLine:
+                longestLine = newLineCount;
+
+            completed_code_buffer.append(full_code);
+            
+
+        for i, code in enumerate(completed_code_buffer):
+            # add any extra line breaks needed to even  all images
+            newLineCount = code.count("\n");
+            extraLinesNeeded = longestLine - newLineCount;
+            while extraLinesNeeded > 0:
+                code += "\n";
+                extraLinesNeeded -=1;
+            
+
+            self.make_image_from_code(code, file_name, i)
+
+        self.convert_images_to_video(file_name);
+        self.clean_temp_directory();
 
 
     def convert_images_to_video(self, file_name):
-        ffmpeg.input(f'/path/to/jpegs/{file_name}*.png', pattern_type='glob', framerate=frame_rate).output(file_name + '.mp4').run());
+
+        ffmpeg.input(f'{temp_location}/*.png', pattern_type='glob', framerate=5).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
+        # self.run_system_command("
 
 
-        def make_image_from_code(self, code, file_name, index_of_image): # index is for the video file
+    def make_image_from_code(self, code, file_name, index_of_image): # index is for the video file
             # try:
         #     self.run_system_command("mkdir temp-img") # todo move this to its proper place
         # except:
@@ -87,7 +112,14 @@ class ncodevideo:
         #TODO: use stdin to optimise
         with open("temp_code.txt", "w") as text_file:
             print(code, file=text_file, end="")
-        print(self.run_system_command(silicon_command + file_name + str(index_of_image) + ".png" ));
+        self.run_system_command(silicon_command + file_name + str(index_of_image) + ".png");
+
+    def clean_temp_directory(self):
+        try:
+            self.run_system_command(f"rm {temp_location}/*.png");
+        except:
+            pass;
+
 
 
 nv = ncodevideo();
