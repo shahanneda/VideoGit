@@ -16,6 +16,7 @@ commit2="7d1633a"
 wpm = 480;
 chars_per_second = wpm * 5 / 60; #5 char/word * 1min/60sec
 up_down_space = 20;
+max_line_length = 140;
 
 
 frame_rate = 30;
@@ -43,12 +44,18 @@ class ncodevideo:
 
 
     def handle_file_diffs(self, diff_of_file):
-
         lines_of_diffs = str.split(diff_of_file, "\n");
         file_name = lines_of_diffs[2][5:] # get second line (has filename) and remove the - space spcae
         file_name = file_name.split("/")[len(file_name.split("/")) - 1] # remove the directory like /gg/gg/g and just get the last part
-
         lines_of_diffs = lines_of_diffs[5:] # remove the first 3 lines, becuase its just location info
+
+        # handle very long line wrapping
+        for i, line in enumerate(lines_of_diffs):
+            if len(line) > max_line_length:
+                first_non_whitespace = len(line) - len(line.lstrip());
+                white_space = line[:first_non_whitespace];
+                after_wrap = line[max_line_length:];
+                lines_of_diffs[i] = f"{line[:max_line_length]}\n{white_space}{after_wrap}"; # add the lien wrap
 
         lines_without_diff = lines_of_diffs;
         changed_lines_dict = {}; # we need to store this so we can add them later
@@ -71,10 +78,12 @@ class ncodevideo:
 
         # remove all the lines queed up in changed_lines_dict , if it is in the change lines, we should remove it since we will ad it later, unless it is marked to be remved, then we should not remove it since we want to see it fade
         for i, line in enumerate(lines_of_diffs):
+
             if(i not in changed_lines_dict or i in indices_of_lines_to_be_removed):
                 lines_without_diff[i] = line;
             else:
                 lines_without_diff[i] = ""; #put blank line since we will want to add it later and dont want to mess up the notation
+
 
 
 
@@ -124,6 +133,8 @@ class ncodevideo:
 
                 full_code = list(filter(None, file_in_list_form)) # remove the "" marker used before
                 full_code = full_code[max(0, (line_number - up_down_space)):(line_number + up_down_space)]; # only show the seciton we are changing, not the entire file
+
+
                 full_code = "\n".join(full_code); # add newlines and make it in to string
                 # print("\n\n\n\n" + full_code);
                 full_code = re.sub(r'@@(.*?)@@', "", full_code); # this regex is to remove the git hulls which are @@ int ... @@
@@ -134,7 +145,7 @@ class ncodevideo:
                     longest_line = new_line_count;
 
                 completed_code_buffer.append(full_code);
-            
+
 
 
 
@@ -144,7 +155,7 @@ class ncodevideo:
 
 
 
-    
+
     def convert_completed_code_to_video(self, completed_code_buffer, file_name, frames_per_char, longest_line):
         real_frame_rate = frame_rate/ frames_per_char;
         for i, code in enumerate(completed_code_buffer):
@@ -191,7 +202,7 @@ class ncodevideo:
             print(code, file=text_file, end="")
         self.run_system_command(f"{silicon_command}/{file_name}{index_of_image}.png --language {extension}"); # make master copy
 
-        
+
         # for i in range(0, number_of_copies): #copy it as many times as needed
         #     self.run_system_command(f"cp {temp_location}/{file_name}.png {temp_location}/{file_name}{i+index_of_image}.png");
         #
