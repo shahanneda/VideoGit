@@ -2,6 +2,7 @@
 import subprocess
 import re
 import ffmpeg
+import sys;
 
 
 get_log_command = "git log --pretty=format:\"%h %s\"";
@@ -9,15 +10,16 @@ temp_location = "temp-img"
 output_loc = temp_location;
 silicon_command = f"silicon temp_code.txt --language cpp --output {temp_location}/";
 batcmd="git status"
-commit1="700043f"
-commit2="3f8d661"
+commit1="eb3a58a"
+commit2="bcdc708"
 chars_per_second = 3;
 
 
 frame_rate = 30;
 class ncodevideo:
-    def run_system_command(self, command, silent=false):
-        return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL)
+    def run_system_command(self, command, silent=False):
+        #, stderr=subprocess.DEVNULL
+        return subprocess.check_output(command, shell=True, text=True)
 
     def __init__(self):
         find_changed_file_paths = f"git diff --name-only {commit1}..{commit2}";
@@ -109,6 +111,9 @@ class ncodevideo:
                     longest_line = new_line_count;
 
                 completed_code_buffer.append(full_code);
+            
+
+
 
 
         self.convert_completed_code_to_video(completed_code_buffer, file_name, frames_per_char, longest_line);
@@ -126,6 +131,16 @@ class ncodevideo:
                 code += "\n";
                 extra_lines_needed -=1;
             self.make_image_from_code(code, file_name, i, frames_per_char)
+
+            #progress bar
+            sys.stdout.write('\r');
+            max_size = 100;
+
+            progress = int(max_size * float(i/len(completed_code_buffer)));
+            bar = "█" * progress;
+            bar = bar + "-" * (max_size-progress);
+            sys.stdout.write(f"On Frame {i} of {len(completed_code_buffer)} *** [{bar}]");
+            sys.stdout.flush();
 
         self.convert_images_to_video(file_name, real_frame_rate=(frames_per_char * chars_per_second) );
         self.clean_temp_directory();
