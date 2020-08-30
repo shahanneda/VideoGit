@@ -54,12 +54,12 @@ class ncodevideo:
 
         for i, line in enumerate(lines_of_diffs): # first remove all of the - lines, so we dont mess up the line numbers
             if(len(line) > 0 and line[0] == "-"): # remove the -  
-                # line = line[1:]; # remove the -
+                line = " " + line[1:]; # remove the -
                 changed_lines_dict[i] = line; # add it to thhe list keeping track
                 indices_of_lines_to_be_removed.append(i); # special marker for later so we know to remove the line
 
             elif(len(line) > 0 and line[0] == "+"): # remove the lines that have addidiotsn, were going to add them later
-                # line = line[1:]
+                line = " " + line[1:] # remove + at start of line
                 changed_lines_dict[i] =  line;
 
 
@@ -118,7 +118,11 @@ class ncodevideo:
 
     def convert_images_to_video(self, file_name):
 
-        ffmpeg.input(f'{temp_location}/{file_name}*.png', pattern_type='glob', framerate=5).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
+        print(self.run_system_command("pwd"));
+        self.run_system_command(f"ffmpeg -r {5} -f image2 -s 1920x1080 -i {temp_location}/{file_name}%d.png -vcodec libx264 -crf {20} -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p {temp_location}/{file_name}.mp4 -y");
+
+        # self.run_system_command(f"ffmpeg -framerate 1 -y -pattern_type glob -i '{temp_location}/{file_name}*.png' -c:v libx264 -r 30 -pix_fmt yuv420p -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" {temp_location}/{file_name}.mp4");
+        # ffmpeg.input(f'{temp_location}/{file_name}*.png', pattern_type='glob', framerate=1).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
         # self.run_system_command("
 
 
@@ -134,7 +138,7 @@ class ncodevideo:
 
     def clean_temp_directory(self):
         try:
-            # self.run_system_command(f"rm {temp_location}/*.png");
+            self.run_system_command(f"rm {temp_location}/*.png");
             pass;
         except:
             pass;
