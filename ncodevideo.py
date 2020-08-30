@@ -1,5 +1,6 @@
 
 import subprocess
+import re
 
 
 get_log_command = "git log --pretty=format:\"%h %s\"";
@@ -33,30 +34,37 @@ class ncodevideo:
     def handle_file_diffs(self, inital_file, diff_of_file):
         lines_of_diffs = str.split(diff_of_file, "\n");
         file_name = lines_of_diffs[2][5:] # get second line (has filename) and remove the - space spcae
-        file_name = file_name.split("/")[len(file_name.split("/")) - 1] # remove the directory /gg/gg/g and just get the last part
+        file_name = file_name.split("/")[len(file_name.split("/")) - 1] # remove the directory like /gg/gg/g and just get the last part
 
         lines_of_diffs = lines_of_diffs[5:] # remove the first 3 lines, becuase its just location info
 
 
         lines_without_diff = lines_of_diffs;
-        lines_to_be_removed = []; # we need to store this so we can add them later
+        lines_to_be_removed = {}; # we need to store this so we can add them later
 
         for i, line in enumerate(lines_of_diffs):
             if(len(line) > 0 and line[0] == "+"): # remove the lines that have addidiotsn, were going to add them later
-                lines_to_be_removed.append(i);
+                lines_to_be_removed.put(i, line);
 
             if(len(line) > 0 and line[0] == "-"): # remove the -  
                 lines_without_diff[i] = line[1:];
+
 
         # remove all the lines queed up in lines_to_be_removed (the + ones)
         lines_without_diff = [line for i, line in enumerate(lines_without_diff) if i not in lines_to_be_removed] 
 
         full_code = "\n".join(lines_without_diff);
+        full_code = re.sub(r'@@(.*?)@@', "", full_code); # this regex is to remove the git hulls which are @@ int ... @@
 
-        # print(full_code)
-        # print(file_name)
+        print(lines_to_be_removed);
+        self.handle_file_incrementing(full_code, lines_to_be_removed, file_name);
+
+
+
+    def handle_file_incrementing(self, full_code, lines_to_be_removed, file_name):
+
+
         self.make_image_from_code(full_code, file_name, 0);
-
 
 
     def make_image_from_code(self, code, file_name, index_of_image): # index is for the video file
