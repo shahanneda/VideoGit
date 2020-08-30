@@ -10,8 +10,8 @@ temp_location = "temp-img"
 output_loc = temp_location;
 silicon_command = f"silicon {temp_location}/temp_code.txt  --output {temp_location}/";
 batcmd="git status"
-commit1="f2217af"
-commit2="7d1633a"
+commit1="df5cd70"
+commit2="a69f00b"
 
 wpm = 480;
 chars_per_second = wpm * 5 / 60; #5 char/word * 1min/60sec
@@ -30,17 +30,30 @@ class ncodevideo:
         file_paths = str.split(self.run_system_command(find_changed_file_paths), "\n");
         file_paths = list(filter(None, file_paths)) # remove empty strings
 
-        self.loop_through_file_paths(file_paths, commit1, commit2);
+        self.find_and_go_through_commits(commit1, commit2, file_paths);
 
 
-    def loop_through_file_paths(self, file_paths, starting_commit, ending_commit):
-        for file_path in file_paths:
-            try:
-                diff_of_file = self.run_system_command(f"git diff -U999999 {starting_commit}..{ending_commit} {file_path}") # the -U is to make sure we get the entire file
-            except:
-                print("Failed to open file: " + file_path);
-                continue;
-            self.handle_file_diffs(diff_of_file)
+    def find_and_go_through_commits(self, starting_commit, ending_commit, file_paths):
+        all_commits = [starting_commit];
+        all_commits += reversed(self.run_system_command(f"git rev-list --abbrev-commit --ancestry-path {starting_commit}..{ending_commit}").split("\n")[:-1])
+
+        print(all_commits);
+        self.loop_through_file_paths(file_paths, all_commits);
+
+    def loop_through_file_paths(self, file_paths, all_commits):
+        for file_path in file_paths: 
+            file_name = file_path.split("/")[len(file_path.split("/")) - 1] # remove the directory like /gg/gg/g and just get the last part
+            completed_code_buffer = [];
+
+            for i, commit in enumerate(all_commits[:-1]):
+                try:
+                    diff_of_file = self.run_system_command(f"git diff -U999999 {commit}..{all_commits[i+1]} {file_path}") # the -U is to make sure we get the entire file
+                    completed_code_buffer += self.handle_file_diffs(diff_of_file)
+                except:
+                    print("Failed to open file: " + file_path);
+                    continue;
+
+            self.convert_completed_code_to_video(completed_code_buffer, file_name);
 
 
     def handle_file_diffs(self, diff_of_file):
@@ -84,10 +97,8 @@ class ncodevideo:
             else:
                 lines_without_diff[i] = ""; #put blank line since we will want to add it later and dont want to mess up the notation
 
+        return(self.handle_file_incrementing(lines_without_diff, changed_lines_dict,indices_of_lines_to_be_removed, file_name));
 
-
-
-        self.handle_file_incrementing(lines_without_diff, changed_lines_dict,indices_of_lines_to_be_removed, file_name);
 
 
 
@@ -116,9 +127,7 @@ class ncodevideo:
                         if line in next_added_line_after_this and next_added_line_after_this.index(line) == 0: 
                             file_in_list_form[line_number] = "" # remove the current line
                             file_in_list_form[line_number+1] = line; # add ourself to the next line instantly
-                            print(next_added_line_after_this.index(line));
                             lines_to_be_added[line_number+1] = next_added_line_after_this[len(line):] # remove this line from the next line to be added, since were not going to remove it and we already put it there
-                            print(f"Original {line}\n,  After: {lines_to_be_added[line_number+1]}\n\n\n");
 
                             break # do not remove anymore
 
@@ -149,15 +158,17 @@ class ncodevideo:
 
 
 
-
-        self.convert_completed_code_to_video(completed_code_buffer, file_name, frames_per_char, longest_line);
-
+        return completed_code_buffer;
 
 
 
 
-    def convert_completed_code_to_video(self, completed_code_buffer, file_name, frames_per_char, longest_line):
-        real_frame_rate = frame_rate/ frames_per_char;
+
+
+    def convert_completed_code_to_video(self, completed_code_buffer, file_name):
+        frames_per_char = frame_rate / chars_per_second;
+
+        real_frame_rate = frame_rate / frames_per_char;
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images
             # new_line_count = code.count("\n");
