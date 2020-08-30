@@ -47,8 +47,6 @@ class ncodevideo:
         file_name = file_name.split("/")[len(file_name.split("/")) - 1] # remove the directory like /gg/gg/g and just get the last part
 
         lines_of_diffs = lines_of_diffs[5:] # remove the first 3 lines, becuase its just location info
-        print(f"Starting file {file_name}");
-
 
         lines_without_diff = lines_of_diffs;
         changed_lines_dict = {}; # we need to store this so we can add them later
@@ -135,11 +133,10 @@ class ncodevideo:
             #progress bar
             sys.stdout.write('\r');
             max_size = 100;
-
             progress = int(max_size * float(i/len(completed_code_buffer)));
             bar = "█" * progress;
             bar = bar + "-" * (max_size-progress);
-            sys.stdout.write(f"On Frame {i} of {len(completed_code_buffer)} *** [{bar}]");
+            sys.stdout.write(f"{file_name}: On Frame {i} of {len(completed_code_buffer)} *** [{bar}]");
             sys.stdout.flush();
 
         self.convert_images_to_video(file_name, real_frame_rate=(frames_per_char * chars_per_second) );
