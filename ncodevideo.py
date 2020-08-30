@@ -11,6 +11,7 @@ silicon_command = f"silicon temp_code.txt --language cpp --output {temp_location
 batcmd="git status"
 commit1="700043f"
 commit2="3f8d661"
+chars_per_second = 3;
 
 
 frame_rate = 30;
@@ -83,24 +84,36 @@ class ncodevideo:
         longestLine = 0;
 
         for line_number, line in lines_to_be_added.items():
-            if line_number in indices_of_lines_to_be_removed: # check if its marked to be removed
-                line = ""; # we set it to blank so it doesnt mess up the line numbers in the array
-                file_in_list_form[line_number] = "";
-            else:
-                file_in_list_form[line_number] = line # add line
+            number_of_frames_needed = (len(line) / chars_per_second) * frame_rate; # how many frames needed to add/remove line
+            frames_per_char = frame_rate / chars_per_second;
+            for i in range(0,number_of_frames_needed, frames_per_char):
+                if line_number in indices_of_lines_to_be_removed: # check if its marked to be removed
+                    # handle_image_creation_remove_line();
+                    line = line[:-1]; # remove last chharater
+                    file_in_list_form[line_number] = line;
+                else:
+                    handle_image_creation_add_line(self,file_in_list_form, line_number, line, file_name)
+                    file_in_list_form[line_number] = line # add line
 
-            full_code = list(filter(None, file_in_list_form)) # remove the "" marker used before
-            full_code = "\n".join(full_code); # add newlines and make it in to string
-            full_code = re.sub(r'@@(.*?)@@', "", full_code); # this regex is to remove the git hulls which are @@ int ... @@
+                full_code = list(filter(None, file_in_list_form)) # remove the "" marker used before
+                full_code = "\n".join(full_code); # add newlines and make it in to string
+                full_code = re.sub(r'@@(.*?)@@', "", full_code); # this regex is to remove the git hulls which are @@ int ... @@
 
-            # find longest line so we space all images evenly
-            newLineCount = full_code.count("\n"); 
-            if newLineCount > longestLine:
-                longestLine = newLineCount;
+                # find longest line so we space all images evenly
+                newLineCount = full_code.count("\n"); 
+                if newLineCount > longestLine:
+                    longestLine = newLineCount;
 
-            completed_code_buffer.append(full_code);
+                completed_code_buffer.append(full_code);
 
 
+        self.convert_completed_code_to_video(completed_code_buffer, file_name);
+
+
+
+
+    
+    def convert_completed_code_to_video(self, completed_code_buffer, file_name):
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images
             newLineCount = code.count("\n");
@@ -108,13 +121,11 @@ class ncodevideo:
             while extraLinesNeeded > 0:
                 code += "\n";
                 extraLinesNeeded -=1;
-
-
             self.make_image_from_code(code, file_name, i)
 
         self.convert_images_to_video(file_name);
         self.clean_temp_directory();
-
+    # def handle_image_creation_add_line(self, line:
 
     def convert_images_to_video(self, file_name):
 
