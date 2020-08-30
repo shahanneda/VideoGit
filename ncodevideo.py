@@ -16,8 +16,8 @@ chars_per_second = 3;
 
 frame_rate = 30;
 class ncodevideo:
-    def run_system_command(self, command):
-        return subprocess.check_output(command, shell=True, text=True)
+    def run_system_command(self, command, silent=false):
+        return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL)
 
     def __init__(self):
         find_changed_file_paths = f"git diff --name-only {commit1}..{commit2}";
@@ -134,7 +134,8 @@ class ncodevideo:
     def convert_images_to_video(self, file_name, real_frame_rate):
 
         print(self.run_system_command("pwd"));
-        self.run_system_command(f"ffmpeg -r {real_frame_rate} -f image2 -s 1920x1080 -i {temp_location}/{file_name}%d.png -vcodec libx264 -crf {20} -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p {temp_location}/{file_name}.mp4 -y");
+        # real framrate is the input framereate, while the -r is the output
+        self.run_system_command(f"ffmpeg -framerate {real_frame_rate} -r {frame_rate} -f image2 -s 1920x1080 -i {temp_location}/{file_name}%d.png -vcodec libx264 -crf {20} -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p {temp_location}/{file_name}.mp4 -y");
 
         # self.run_system_command(f"ffmpeg -framerate 1 -y -pattern_type glob -i '{temp_location}/{file_name}*.png' -c:v libx264 -r 30 -pix_fmt yuv420p -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" {temp_location}/{file_name}.mp4");
         # ffmpeg.input(f'{temp_location}/{file_name}*.png', pattern_type='glob', framerate=1).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
