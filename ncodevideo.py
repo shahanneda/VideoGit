@@ -12,7 +12,9 @@ silicon_command = f"silicon temp_code.txt --language cpp --output {temp_location
 batcmd="git status"
 commit1="eb3a58a"
 commit2="bcdc708"
-chars_per_second = 3;
+
+wpm = 60;
+chars_per_second = wpm * 5 / 60; #5 char/word * 1min/60sec
 
 
 frame_rate = 30;
@@ -121,6 +123,8 @@ class ncodevideo:
 
     
     def convert_completed_code_to_video(self, completed_code_buffer, file_name, frames_per_char, longest_line):
+        real_frame_rate = frame_rate/ frames_per_char;
+        print(real_frame_rate);
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images
             new_line_count = code.count("\n");
@@ -139,7 +143,7 @@ class ncodevideo:
             sys.stdout.write(f"{file_name}: On Frame {i} of {len(completed_code_buffer)} *** [{bar}]");
             sys.stdout.flush();
 
-        self.convert_images_to_video(file_name, real_frame_rate=(frames_per_char * chars_per_second) );
+        self.convert_images_to_video(file_name, real_frame_rate=real_frame_rate );
         self.clean_temp_directory();
     # def handle_image_creation_add_line(self, line:
 
@@ -147,7 +151,7 @@ class ncodevideo:
 
         print(self.run_system_command("pwd"));
         # real framrate is the input framereate, while the -r is the output
-        self.run_system_command(f"ffmpeg -framerate {real_frame_rate} -r {frame_rate} -f image2 -s 1920x1080 -i {temp_location}/{file_name}%d.png -vcodec libx264 -crf {20} -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p {temp_location}/{file_name}.mp4 -y");
+        self.run_system_command(f"ffmpeg -framerate {real_frame_rate} -f image2 -s 1920x1080 -i {temp_location}/{file_name}%d.png -vcodec libx264 -crf 20 -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p -r {frame_rate} {temp_location}/{file_name}.mp4 -y");
 
         # self.run_system_command(f"ffmpeg -framerate 1 -y -pattern_type glob -i '{temp_location}/{file_name}*.png' -c:v libx264 -r 30 -pix_fmt yuv420p -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" {temp_location}/{file_name}.mp4");
         # ffmpeg.input(f'{temp_location}/{file_name}*.png', pattern_type='glob', framerate=1).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
