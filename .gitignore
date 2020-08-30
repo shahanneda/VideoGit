@@ -7,6 +7,7 @@ __pycache__/
 *.so
 
 input-files/
+temp-img/
 # Distribution / packaging
 .Python
 build/

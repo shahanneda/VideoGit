@@ -8,12 +8,12 @@ import sys;
 get_log_command = "git log --pretty=format:\"%h %s\"";
 temp_location = "temp-img"
 output_loc = temp_location;
-silicon_command = f"silicon temp_code.txt --language cpp --output {temp_location}/";
+silicon_command = f"silicon {temp_location}/temp_code.txt  --output {temp_location}/";
 batcmd="git status"
-commit1="eb3a58a"
-commit2="bcdc708"
+commit1="7d1633a"
+commit2="f2217af"
 
-wpm = 60;
+wpm = 240;
 chars_per_second = wpm * 5 / 60; #5 char/word * 1min/60sec
 
 
@@ -140,7 +140,7 @@ class ncodevideo:
             progress = int(max_size * float(i/len(completed_code_buffer)));
             bar = "█" * progress;
             bar = bar + "-" * (max_size-progress);
-            sys.stdout.write(f"{file_name}: On Frame {i} of {len(completed_code_buffer)} *** [{bar}]");
+            sys.stdout.write(f"{file_name}: Creating Image {i} of {len(completed_code_buffer)} *** [{bar}]");
             sys.stdout.flush();
 
         self.convert_images_to_video(file_name, real_frame_rate=real_frame_rate );
@@ -164,9 +164,10 @@ class ncodevideo:
         # except:
         #     pass;
         #TODO: use stdin to optimise
-        with open("temp_code.txt", "w") as text_file:
+        extension =  file_name.split(".")[-1]; # get the file extension
+        with open("{temp_location}/temp_code.txt", "w") as text_file:
             print(code, file=text_file, end="")
-        self.run_system_command(f"{silicon_command}/{file_name}{index_of_image}.png"); # make master copy
+        self.run_system_command(f"{silicon_command}/{file_name}{index_of_image}.png --language {extension}"); # make master copy
 
         
         # for i in range(0, number_of_copies): #copy it as many times as needed
