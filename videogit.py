@@ -246,7 +246,7 @@ class videogit:
         frames_per_char = self.frame_rate / self.chars_per_second;
 
         real_frame_rate = self.frame_rate / frames_per_char;
-        print(f"\nCreating video for {colored(clean_file_name, 'green')}:");
+        print(f"\nCreating video for {colored(clean_file_name, 'red')}:");
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images
             # new_line_count = code.count("\n");
