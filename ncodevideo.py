@@ -5,6 +5,9 @@ import re
 import sys;
 import math;
 import argparse
+import textwrap
+
+from termcolor import colored, cprint
 
 
 get_log_command = "git log --pretty=format:\"%h %s\"";
@@ -34,23 +37,25 @@ class ncodevideo:
             raise NotADirectoryError(string)
         
     def handle_args(self):
-        parser = argparse.ArgumentParser(description='Process some integers.', 
+        parser = argparse.ArgumentParser(description='Converts git commits, to a beautiful animated video. To get started type "videogit -l"', 
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter # to show the default values
                 );
 
-        parser.add_argument('inital-commit', type=str, help='the commit to start the video at')
-        parser.add_argument('final-commit', type=str, nargs='?', default="the last commit", help='the commit to end the video at, if not specified will use the HEAD')
+        parser.add_argument('-l','--list-git-commits',nargs=0, action=ListGitCommitsAction, help='list your recent commits and hashes')
+        parser.add_argument('inital-commit', type=str, help='the hash of the commit to start the video at')
+        parser.add_argument('final-commit', type=str, nargs='?', default="the most recent commit", help='the hash of the commit to end the video at, if not specified will use the HEAD')
         parser.add_argument('-w','--wpm', type=int, default="480", help='the speed of the video in words per minute')
         parser.add_argument('-f','--frame-rate', type=int, default="30", help='the framerate of the output video')
-        parser.add_argument('-o','--output-dir', type=self.dir_path, default="current directory", help='the framerate of the output video')
-        parser.add_argument('-d','--git-repo-directory', type=self.dir_path, default="current directory", help='the repo of ')
+        parser.add_argument('-o','--output-dir', type=self.dir_path, default="current directory", help='the directory of the output videos')
+        parser.add_argument('-d','--git-repo-directory', type=self.dir_path, default="current directory", help='the repo of your project')
+        parser.add_argument('-u','--up-down-space', type=int, default="20", help='how many lines above and bellow the current editing line to include in the video')
 
         args = parser.parse_args()
         print(args.inital-commit, args.final-commit);
 
 
     def __init__(self):
-        print("\n\n" + "-------- VideoGit --------".center(50), end="\n\n");
+        cprint(center_wrap("\n\n-------- VideoGit --------"), "blue", end="\n\n" );
         self.handle_args();
         find_changed_file_paths = f"git diff --name-only {commit1}..{commit2}";
         file_paths = str.split(self.run_system_command(find_changed_file_paths), "\n");
@@ -257,6 +262,27 @@ class ncodevideo:
             pass;
 
 
+
+class ListGitCommitsAction(argparse.Action):
+    def __init__(self, option_strings, dest, nargs=0, **kwargs):
+        super(ListGitCommitsAction, self).__init__(option_strings, dest,nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        initial_print_text = center_wrap(f"Here are some of you recent commits:") ;
+        print("Generate a list like this with " +  colored("git ll, or git log --pretty=format:\"%h %s\"","white" ));
+        cprint(initial_print_text);
+        cprint("Hash    Commit", "white" );
+        print(str(subprocess.check_output("git log --pretty=format:\"%h %s\"", shell=True, text=True).center(50)))
+
+        later_help_text = colored("After you have picked your starting and ending commit, you can run ","blue") + colored('\nvideogit <inital_commit_hash> <final_commit_hash>\n', 'white')  + colored(" to render your video, alternativly you can leave the final commit out and videogit will use the most recent commit.To see full options type: ", "blue") + colored("videogit -h", "white");
+        later_help_text = center_wrap(later_help_text, cwidth=80, width=70);
+        print(later_help_text);
+
+        sys.exit();
+
+def center_wrap(text, cwidth=80, **kw):
+    lines = textwrap.wrap(text, **kw)
+    return "\n".join(line.center(cwidth) for line in lines)
 
 nv = ncodevideo();
 
