@@ -11,11 +11,9 @@ from termcolor import colored, cprint
 import tempfile
 import shutil
 
-get_log_command = "git log --pretty=format:\"%h %s\"";
-batcmd="git status"
 
 
-class ncodevideo:
+class videogit:
     def setup_silicon_command(self):
         self.silicon_command = f"silicon {self.temp_location}/temp_code.txt --no-line-number --output {self.temp_location}";
 
@@ -37,7 +35,7 @@ class ncodevideo:
             sys.exit();
         
     def handle_args(self):
-        parser = argparse.ArgumentParser(description=f'Converts git commits, to a beautiful animated video. To get started type {colored("videogit -l", "green")}', 
+        parser = argparse.ArgumentParser(description=f'{colored("VideoGit by shahanneda (shahan.ca):", "cyan")} Converts git commits, to a beautiful animated video. To get started type {colored("videogit -l", "green")}, \n', 
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter # to show the default values
                 );
 
@@ -49,8 +47,9 @@ class ncodevideo:
         parser.add_argument('-w','--wpm', type=int, default="480", help='the speed of the video in words per minute')
         parser.add_argument('-r','--frame-rate', type=int, default="30", help='the framerate of the output video')
         parser.add_argument('-o','--output-dir', type=self.dir_path, default="current directory", help='the directory of the output videos')
-        parser.add_argument('-u','--up-down-space', type=int, default="20", help='how many lines above and bellow the current editing line to include in the video')
+        parser.add_argument('-u','--up-down-space', type=int, default="20", help='how many lines above and below the current editing line to include in the video')
         parser.add_argument('-m','--max_line_length', type=int, default="120", help='the maximum line length in chars before wrapping the text')
+        parser.add_argument('-v', '--verbose', type=bool, default=False, help='print any errors or logging information');
 
         args = parser.parse_args()
 
@@ -61,6 +60,7 @@ class ncodevideo:
         self.max_line_length = args.max_line_length;
         self.up_down_space = args.up_down_space;
         self.files = args.files;
+        self.verbose = args.verbose;
 
         commit1 = args.inital_commit;
         commit2 = args.final_commit;
@@ -121,11 +121,13 @@ class ncodevideo:
                     continue;
 
             try:
-                self.convert_completed_code_to_video(completed_code_buffer, prefile_text + file_name);
+                self.convert_completed_code_to_video(completed_code_buffer, prefile_text + file_name, file_name);
             except KeyboardInterrupt:
                 print("\n");
                 sys.exit(0);
-            except:
+            except Exception as e:
+                if self.verbose:
+                    print(e);
                 print(f"Could not create video for {file_name}");
 
 
@@ -236,10 +238,11 @@ class ncodevideo:
 
 
 
-    def convert_completed_code_to_video(self, completed_code_buffer, file_name):
+    def convert_completed_code_to_video(self, completed_code_buffer, file_name, clean_file_name):
         frames_per_char = self.frame_rate / self.chars_per_second;
 
         real_frame_rate = self.frame_rate / frames_per_char;
+        print(f"\nCreating video for {clean_file_name}:");
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images
             # new_line_count = code.count("\n");
@@ -247,6 +250,7 @@ class ncodevideo:
             # while extra_lines_needed > 0:
             #     code += "\n";
             #     extra_lines_needed -=1;
+            code += " " * self.max_line_length;
             self.make_image_from_code(code, file_name, i, frames_per_char)
 
             #progress bar
@@ -255,7 +259,7 @@ class ncodevideo:
             progress = int(max_size * float(i/len(completed_code_buffer)));
             bar = "█" * progress;
             bar = bar + "-" * (max_size-progress);
-            sys.stdout.write(f"Creating video for {file_name}: Creating Image {i} of {len(completed_code_buffer)} *** [{bar}]");
+            sys.stdout.write(f"Creating Image {i} of {len(completed_code_buffer)} *** [{bar}]");
             sys.stdout.flush();
 
         self.convert_images_to_video(file_name, real_frame_rate=real_frame_rate );
@@ -321,7 +325,7 @@ def throw_git_not_found_error():
      cprint("No Git Repo Found!!, try moving to a folder with a git repo", "red");
 
 
-nv = ncodevideo();
+nv = videogit();
 
 
 
