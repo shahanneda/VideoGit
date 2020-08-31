@@ -116,6 +116,9 @@ class videogit:
     def find_and_go_through_commits(self, starting_commit, ending_commit, file_paths):
         all_commits = [starting_commit];
         all_commits += reversed(self.run_system_command(f"git rev-list --abbrev-commit --ancestry-path {starting_commit}..{ending_commit}").split("\n")[:-1])
+
+        self.max_line_length_dict = {}; # stores the maximum line length of each file, inroder to even the vidoe out
+
         self.loop_through_file_paths(file_paths, all_commits);
 
     def loop_through_file_paths(self, file_paths, all_commits):
@@ -239,12 +242,11 @@ class videogit:
                 if new_line_count > longest_line:
                     longest_line = new_line_count;
 
-                print(file_name);
                 completed_code_buffer.append(full_code);
 
 
 
-
+        self.max_line_length_dict[file_name] = longest_line;
         return completed_code_buffer;
 
 
@@ -258,12 +260,13 @@ class videogit:
         real_frame_rate = self.frame_rate / frames_per_char;
         print(f"\nCreating video for {colored(clean_file_name, 'green')}:");
         for i, code in enumerate(completed_code_buffer):
-            # add any extra line breaks needed to even  all images
-            # new_line_count = code.count("\n");
-            # extra_lines_needed = longest_line - new_line_count;
-            # while extra_lines_needed > 0:
-            #     code += "\n";
-            #     extra_lines_needed -=1;
+            # add any extra line breaks needed to even  all images out
+            longest_line = self.max_line_length_dict[file_name];
+            new_line_count = code.count("\n");
+            extra_lines_needed = longest_line - new_line_count;
+            while extra_lines_needed > 0:
+                code += "\n";
+                extra_lines_needed -=1;
             code = " " * self.max_line_length + "\n" + code;
             code += "\n" + " " * self.max_line_length + "\n";
             self.make_image_from_code(code, file_name, i, frames_per_char)
@@ -340,7 +343,7 @@ def center_wrap(text, cwidth=80, **kw):
     lines = textwrap.wrap(text, **kw)
     return "\n".join(line.center(cwidth) for line in lines)
 def throw_git_not_found_error():
-     cprint("No Git Repo Found!!, try moving to a folder with a git repo", "red");
+     cprint("No Git Repo Found!!, try moving to a folder with a git repo, or setting your git repo directory with -d", "red");
 
 
 nv = videogit();
