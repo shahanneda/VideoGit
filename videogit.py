@@ -51,7 +51,7 @@ class videogit:
         parser.add_argument('-r','--frame-rate', type=int, default="30", help='the framerate of the output video')
         parser.add_argument('-o','--output-dir', type=self.dir_path, default="current directory", help='the directory of the output videos')
         parser.add_argument('-u','--up-down-space', type=int, default="20", help='how many lines above and below the current editing line to include in the video')
-        parser.add_argument('-m','--max_line_length', type=int, default="120", help='the maximum line length in chars before wrapping the text')
+        parser.add_argument('-m','--max_line_length', type=int, default="200", help='the maximum line length in chars before wrapping the text')
         parser.add_argument('-v', '--verbose', default=False, action='store_true', help='print any errors or logging information');
 
         args = parser.parse_args()
@@ -69,7 +69,7 @@ class videogit:
         commit2 = args.final_commit;
 
         if(commit2 == "the most recent commit"):
-            cprint("final commit not specified, using the most recent commit", "white");
+            cprint(center_wrap("final commit not specified, using the most recent commit"), "white");
             try:
                commit2 = self.run_system_command("git rev-parse --short HEAD");
             except:
@@ -99,6 +99,11 @@ class videogit:
         if self.files is not None:
             file_paths = [file_path for file_path in file_paths if file_path in self.files];
 
+        for file in self.files:
+            if file not in file_paths:
+                print(center_wrap(f"{colored('Warning: File', 'yellow')} {file} {colored('not found! Make sure file exists in git history, and you specified the right path/name to the file, relative to your git directory', 'yellow')}"));
+
+            
         self.setup_temp_path();
         self.setup_silicon_command();
         self.find_and_go_through_commits(commit1, commit2, file_paths);
@@ -246,7 +251,7 @@ class videogit:
         frames_per_char = self.frame_rate / self.chars_per_second;
 
         real_frame_rate = self.frame_rate / frames_per_char;
-        print(f"\nCreating video for {colored(clean_file_name, 'red')}:");
+        print(f"\nCreating video for {colored(clean_file_name, 'green')}:");
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images
             # new_line_count = code.count("\n");
