@@ -8,12 +8,10 @@ import argparse
 import textwrap
 
 from termcolor import colored, cprint
-
+import tempfile
+import shutil
 
 get_log_command = "git log --pretty=format:\"%h %s\"";
-temp_location = "temp-img"
-output_loc = temp_location;
-silicon_command = f"silicon {temp_location}/temp_code.txt --no-line-number --output {temp_location}/";
 batcmd="git status"
 
 wpm = 480;
@@ -23,6 +21,15 @@ max_line_length = 140;
 frame_rate = 30;
 
 class ncodevideo:
+    def setup_silicon_command(self):
+        self.silicon_command = f"silicon {self.temp_location}/temp_code.txt --no-line-number --output {self.temp_location}";
+
+    def setup_temp_path(self):
+        self.temp_dir_object = tempfile.TemporaryDirectory();
+        self.temp_location = self.temp_dir_object.name
+        print(self.temp_location)
+        
+
     def run_system_command(self, command, silent=False):
         if silent:
             return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL)
@@ -58,7 +65,11 @@ class ncodevideo:
                commit2 = self.run_system_command("git rev-parse --short HEAD");
             except:
                 throw_git_not_found_error();
-
+        
+        if(args.output_dir == "current directory"):
+                self.output_dir = ".";
+        else:
+                self.output_dir = args.output_dir;
 
         return (commit1, commit2);
 
@@ -74,6 +85,8 @@ class ncodevideo:
             sys.exit();
         file_paths = list(filter(None, file_paths)) # remove empty strings
 
+        self.setup_temp_path();
+        self.setup_silicon_command();
         self.find_and_go_through_commits(commit1, commit2, file_paths);
 
 
@@ -95,13 +108,13 @@ class ncodevideo:
                     print("Failed to open file: " + file_path);
                     continue;
 
-            try:
-                self.convert_completed_code_to_video(completed_code_buffer, file_name);
-            except KeyboardInterrupt:
-                print("\n");
-                sys.exit(0);
-            except:
-                print(f"Could not create video for {file_name}");
+            # try:
+            self.convert_completed_code_to_video(completed_code_buffer, file_name);
+            # except KeyboardInterrupt:
+            print("\n");
+            sys.exit(0);
+            # except:
+            print(f"Could not create video for {file_name}");
 
 
     def handle_file_diffs(self, diff_of_file, file_name):
@@ -241,10 +254,10 @@ class ncodevideo:
 
         print(self.run_system_command("pwd"));
         # real framrate is the input framereate, while the -r is the output
-        self.run_system_command(f"ffmpeg -framerate {real_frame_rate} -f image2 -s 1920x1080 -i {temp_location}/{file_name}%d.png -vcodec libx264 -crf 20 -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p -r {frame_rate} {temp_location}/{file_name}.mp4 -y");
+        self.run_system_command(f"ffmpeg -framerate {real_frame_rate} -f image2 -s 1920x1080 -i {self.temp_location}/{file_name}%d.png -vcodec libx264 -crf 20 -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p -r {frame_rate} -s 1920x1080 {self.output_dir}/{file_name}.mp4 -y");
 
-        # self.run_system_command(f"ffmpeg -framerate 1 -y -pattern_type glob -i '{temp_location}/{file_name}*.png' -c:v libx264 -r 30 -pix_fmt yuv420p -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" {temp_location}/{file_name}.mp4");
-        # ffmpeg.input(f'{temp_location}/{file_name}*.png', pattern_type='glob', framerate=1).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
+        # self.run_system_command(f"ffmpeg -framerate 1 -y -pattern_type glob -i '{self.temp_location}/{file_name}*.png' -c:v libx264 -r 30 -pix_fmt yuv420p -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" {self.temp_location}/{file_name}.mp4");
+        # ffmpeg.input(f'{self.temp_location}/{file_name}*.png', pattern_type='glob', framerate=1).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
         # self.run_system_command("
 
 
@@ -256,20 +269,20 @@ class ncodevideo:
         #TODO: use stdin to optimise
         
         extension =  file_name.split(".")[-1]; # get the file extension
-        with open(f"{temp_location}/temp_code.txt", "w") as text_file:
+        with open(f"{self.temp_location}/temp_code.txt", "w") as text_file:
             print(code, file=text_file, end="")
-        self.run_system_command(f"{silicon_command}/{file_name}{index_of_image}.png --language {extension}"); # make master copy
+        self.run_system_command(f"{self.silicon_command}/{file_name}{index_of_image}.png --language {extension}"); # make master copy
 
 
         # for i in range(0, number_of_copies): #copy it as many times as needed
-        #     self.run_system_command(f"cp {temp_location}/{file_name}.png {temp_location}/{file_name}{i+index_of_image}.png");
+        #     self.run_system_command(f"cp {self.temp_location}/{file_name}.png {self.temp_location}/{file_name}{i+index_of_image}.png");
         #
-        # self.run_system_command(f"rm {temp_location}/{file_name}.png"); # delete origirnal to avoid confusion
+        # self.run_system_command(f"rm {self.temp_location}/{file_name}.png"); # delete origirnal to avoid confusion
 
     def clean_temp_directory(self):
         try:
-            self.run_system_command(f"rm {temp_location}/*.png", silent=True);
             pass;
+            # self.temp_dir_object.cleanup();
         except:
             pass;
 
