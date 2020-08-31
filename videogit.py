@@ -22,7 +22,6 @@ class ncodevideo:
     def setup_temp_path(self):
         self.temp_dir_object = tempfile.TemporaryDirectory();
         self.temp_location = self.temp_dir_object.name
-        print(self.temp_location)
         
 
     def run_system_command(self, command, silent=False):
@@ -34,7 +33,8 @@ class ncodevideo:
         if os.path.isdir(string) or string == "current directory":
             return string
         else:
-            raise NotADirectoryError(string)
+            cprint(f"Not a valid directory : {string} !!", "red");
+            sys.exit();
         
     def handle_args(self):
         parser = argparse.ArgumentParser(description=f'Converts git commits, to a beautiful animated video. To get started type {colored("videogit -l", "green")}', 
@@ -110,17 +110,18 @@ class ncodevideo:
         for file_path in file_paths: 
             file_name = file_path.split("/")[len(file_path.split("/")) - 1] # remove the directory like /gg/gg/g and just get the last part
             completed_code_buffer = [];
+            prefile_text = f"{all_commits[0]}--{all_commits[-1]}--";
 
             for i, commit in enumerate(all_commits[:-1]):
                 try:
                     diff_of_file = self.run_system_command(f"git diff -U999999 {commit}..{all_commits[i+1]} {file_path}") # the -U is to make sure we get the entire file
-                    completed_code_buffer += self.handle_file_diffs(diff_of_file, file_name)
+                    completed_code_buffer += self.handle_file_diffs(diff_of_file, prefile_text + file_name)
                 except:
                     cprint("Failed to open file: " + file_path, "red");
                     continue;
 
             try:
-                self.convert_completed_code_to_video(completed_code_buffer, file_name);
+                self.convert_completed_code_to_video(completed_code_buffer, prefile_text + file_name);
             except KeyboardInterrupt:
                 print("\n");
                 sys.exit(0);
