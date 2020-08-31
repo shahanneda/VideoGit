@@ -15,8 +15,6 @@ temp_location = "temp-img"
 output_loc = temp_location;
 silicon_command = f"silicon {temp_location}/temp_code.txt --no-line-number --output {temp_location}/";
 batcmd="git status"
-commit1="9c537ab"
-commit2="4457a38"
 
 wpm = 480;
 chars_per_second = wpm * 5 / 60; #5 char/word * 1min/60sec
@@ -27,7 +25,8 @@ max_line_length = 140;
 frame_rate = 30;
 class ncodevideo:
     def run_system_command(self, command, silent=False):
-        #, stderr=subprocess.DEVNULL
+        if silent:
+            return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL)
         return subprocess.check_output(command, shell=True, text=True)
 
     def dir_path(self, string): # this is just for argparse
@@ -41,24 +40,40 @@ class ncodevideo:
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter # to show the default values
                 );
 
+        parser.add_argument('-d','--git-repo-directory', type=self.dir_path, default="current directory", help='the repo of your project')
         parser.add_argument('-l','--list-git-commits',nargs=0, action=ListGitCommitsAction, help='list your recent commits and hashes')
-        parser.add_argument('inital-commit', type=str, help='the hash of the commit to start the video at')
-        parser.add_argument('final-commit', type=str, nargs='?', default="the most recent commit", help='the hash of the commit to end the video at, if not specified will use the HEAD')
+        parser.add_argument('inital_commit', type=str, help='the hash of the commit to start the video at')
+        parser.add_argument('final_commit', type=str, nargs='?', default="the most recent commit", help='the hash of the commit to end the video at, if not specified will use the HEAD')
         parser.add_argument('-w','--wpm', type=int, default="480", help='the speed of the video in words per minute')
         parser.add_argument('-f','--frame-rate', type=int, default="30", help='the framerate of the output video')
         parser.add_argument('-o','--output-dir', type=self.dir_path, default="current directory", help='the directory of the output videos')
-        parser.add_argument('-d','--git-repo-directory', type=self.dir_path, default="current directory", help='the repo of your project')
         parser.add_argument('-u','--up-down-space', type=int, default="20", help='how many lines above and bellow the current editing line to include in the video')
 
         args = parser.parse_args()
-        print(args.inital-commit, args.final-commit);
+        
+        commit1 = args.inital_commit;
+        commit2 = args.final_commit;
+        if(commit2 == "the most recent commit"):
+            cprint("final commit not specified, using the most recent commit", "white");
+            try:
+               commit2 = self.run_system_command("git rev-parse --short HEAD");
+            except:
+                throw_git_not_found_error();
 
+        print(commit1, commit2);
+
+        return (commit1, commit2);
 
     def __init__(self):
         cprint(center_wrap("\n\n-------- VideoGit --------"), "blue", end="\n\n" );
-        self.handle_args();
+        (commit1, commit2) =  self.handle_args();
         find_changed_file_paths = f"git diff --name-only {commit1}..{commit2}";
-        file_paths = str.split(self.run_system_command(find_changed_file_paths), "\n");
+        try:
+            file_paths = str.split(self.run_system_command(find_changed_file_paths, silent=True), "\n");
+        except:
+            cprint("\n\nGit Diff Failed!! Make sure there is a git repo, or try checking the hash(es) of the commit(s)", "red");
+            print("type " +colored("videogit -l","blue") + " for a list of possible hashes\n\n");
+            sys.exit();
         file_paths = list(filter(None, file_paths)) # remove empty strings
 
         self.find_and_go_through_commits(commit1, commit2, file_paths);
@@ -268,11 +283,14 @@ class ListGitCommitsAction(argparse.Action):
         super(ListGitCommitsAction, self).__init__(option_strings, dest,nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        initial_print_text = center_wrap(f"Here are some of you recent commits:") ;
+        initial_print_text = center_wrap(f"Here are some of you recent commits :") ;
         print("Generate a list like this with " +  colored("git ll, or git log --pretty=format:\"%h %s\"","white" ));
         cprint(initial_print_text);
         cprint("Hash    Commit", "white" );
-        print(str(subprocess.check_output("git log --pretty=format:\"%h %s\"", shell=True, text=True).center(50)))
+        try:
+            print(str(subprocess.check_output("git log --pretty=format:\"%h %s\"", shell=True, text=True).center(50)))
+        except:
+            throw_git_not_found_error();
 
         later_help_text = colored("After you have picked your starting and ending commit, you can run ","blue") + colored('\nvideogit <inital_commit_hash> <final_commit_hash>\n', 'white')  + colored(" to render your video, alternativly you can leave the final commit out and videogit will use the most recent commit.To see full options type: ", "blue") + colored("videogit -h", "white");
         later_help_text = center_wrap(later_help_text, cwidth=80, width=70);
@@ -283,6 +301,9 @@ class ListGitCommitsAction(argparse.Action):
 def center_wrap(text, cwidth=80, **kw):
     lines = textwrap.wrap(text, **kw)
     return "\n".join(line.center(cwidth) for line in lines)
+def throw_git_not_found_error():
+     cprint("No Git Repo Found!!, try moving to a folder with a git repo", "red");
+
 
 nv = ncodevideo();
 
