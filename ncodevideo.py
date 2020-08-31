@@ -1,17 +1,19 @@
 
+import os
 import subprocess
 import re
 import sys;
 import math;
+import argparse
 
 
 get_log_command = "git log --pretty=format:\"%h %s\"";
 temp_location = "temp-img"
 output_loc = temp_location;
-silicon_command = f"silicon {temp_location}/temp_code.txt  --output {temp_location}/";
+silicon_command = f"silicon {temp_location}/temp_code.txt --no-line-number --output {temp_location}/";
 batcmd="git status"
-commit1="df5cd70"
-commit2="a69f00b"
+commit1="9c537ab"
+commit2="4457a38"
 
 wpm = 480;
 chars_per_second = wpm * 5 / 60; #5 char/word * 1min/60sec
@@ -25,7 +27,31 @@ class ncodevideo:
         #, stderr=subprocess.DEVNULL
         return subprocess.check_output(command, shell=True, text=True)
 
+    def dir_path(self, string): # this is just for argparse
+        if os.path.isdir(string) or string == "current directory":
+            return string
+        else:
+            raise NotADirectoryError(string)
+        
+    def handle_args(self):
+        parser = argparse.ArgumentParser(description='Process some integers.', 
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter # to show the default values
+                );
+
+        parser.add_argument('inital-commit', type=str, help='the commit to start the video at')
+        parser.add_argument('final-commit', type=str, nargs='?', default="the last commit", help='the commit to end the video at, if not specified will use the HEAD')
+        parser.add_argument('-w','--wpm', type=int, default="480", help='the speed of the video in words per minute')
+        parser.add_argument('-f','--frame-rate', type=int, default="30", help='the framerate of the output video')
+        parser.add_argument('-o','--output-dir', type=self.dir_path, default="current directory", help='the framerate of the output video')
+        parser.add_argument('-d','--git-repo-directory', type=self.dir_path, default="current directory", help='the repo of ')
+
+        args = parser.parse_args()
+        print(args.inital-commit, args.final-commit);
+
+
     def __init__(self):
+        print("\n\n" + "-------- VideoGit --------".center(50), end="\n\n");
+        self.handle_args();
         find_changed_file_paths = f"git diff --name-only {commit1}..{commit2}";
         file_paths = str.split(self.run_system_command(find_changed_file_paths), "\n");
         file_paths = list(filter(None, file_paths)) # remove empty strings
@@ -48,18 +74,22 @@ class ncodevideo:
             for i, commit in enumerate(all_commits[:-1]):
                 try:
                     diff_of_file = self.run_system_command(f"git diff -U999999 {commit}..{all_commits[i+1]} {file_path}") # the -U is to make sure we get the entire file
-                    completed_code_buffer += self.handle_file_diffs(diff_of_file)
+                    completed_code_buffer += self.handle_file_diffs(diff_of_file, file_name)
                 except:
                     print("Failed to open file: " + file_path);
                     continue;
 
-            self.convert_completed_code_to_video(completed_code_buffer, file_name);
+            try:
+                self.convert_completed_code_to_video(completed_code_buffer, f"{file_name}-all_commits[0]--all_commits[-1]");
+            except KeyboardInterrupt:
+                print("\n");
+                sys.exit(0);
+            except:
+                print(f"Could not create video for {file_name}");
 
 
-    def handle_file_diffs(self, diff_of_file):
+    def handle_file_diffs(self, diff_of_file, file_name):
         lines_of_diffs = str.split(diff_of_file, "\n");
-        file_name = lines_of_diffs[2][5:] # get second line (has filename) and remove the - space spcae
-        file_name = file_name.split("/")[len(file_name.split("/")) - 1] # remove the directory like /gg/gg/g and just get the last part
         lines_of_diffs = lines_of_diffs[5:] # remove the first 3 lines, becuase its just location info
 
         # handle very long line wrapping
