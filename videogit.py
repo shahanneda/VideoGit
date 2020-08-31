@@ -20,9 +20,8 @@ wpm = 480;
 chars_per_second = wpm * 5 / 60; #5 char/word * 1min/60sec
 up_down_space = 20;
 max_line_length = 140;
-
-
 frame_rate = 30;
+
 class ncodevideo:
     def run_system_command(self, command, silent=False):
         if silent:
@@ -60,7 +59,6 @@ class ncodevideo:
             except:
                 throw_git_not_found_error();
 
-        print(commit1, commit2);
 
         return (commit1, commit2);
 
@@ -82,8 +80,6 @@ class ncodevideo:
     def find_and_go_through_commits(self, starting_commit, ending_commit, file_paths):
         all_commits = [starting_commit];
         all_commits += reversed(self.run_system_command(f"git rev-list --abbrev-commit --ancestry-path {starting_commit}..{ending_commit}").split("\n")[:-1])
-
-        print(all_commits);
         self.loop_through_file_paths(file_paths, all_commits);
 
     def loop_through_file_paths(self, file_paths, all_commits):
@@ -100,7 +96,7 @@ class ncodevideo:
                     continue;
 
             try:
-                self.convert_completed_code_to_video(completed_code_buffer, f"{file_name}-all_commits[0]--all_commits[-1]");
+                self.convert_completed_code_to_video(completed_code_buffer, file_name);
             except KeyboardInterrupt:
                 print("\n");
                 sys.exit(0);
@@ -258,6 +254,7 @@ class ncodevideo:
         # except:
         #     pass;
         #TODO: use stdin to optimise
+        
         extension =  file_name.split(".")[-1]; # get the file extension
         with open(f"{temp_location}/temp_code.txt", "w") as text_file:
             print(code, file=text_file, end="")
@@ -271,7 +268,7 @@ class ncodevideo:
 
     def clean_temp_directory(self):
         try:
-            self.run_system_command(f"rm {temp_location}/*.png");
+            self.run_system_command(f"rm {temp_location}/*.png", silent=True);
             pass;
         except:
             pass;
