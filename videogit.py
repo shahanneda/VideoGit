@@ -117,7 +117,7 @@ class videogit:
         all_commits = [starting_commit];
         all_commits += reversed(self.run_system_command(f"git rev-list --abbrev-commit --ancestry-path {starting_commit}..{ending_commit}").split("\n")[:-1])
 
-        self.max_line_length_dict = {}; # stores the maximum line length of each file, inroder to even the vidoe out
+        self.max_line_count_dict = {}; # stores the maximum line length of each file, inroder to even the vidoe out
 
         self.loop_through_file_paths(file_paths, all_commits);
 
@@ -195,7 +195,7 @@ class videogit:
         index_of_images = 0; # for creating the video frames
         index_of_images+=1;
         completed_code_buffer = [];
-        longest_line = 0;
+        longest_line_count = 0;
 
         frames_per_char = self.frame_rate / self.chars_per_second;
 
@@ -239,14 +239,14 @@ class videogit:
 
                 # find longest line so we space all images evenly
                 new_line_count = full_code.count("\n"); 
-                if new_line_count > longest_line:
-                    longest_line = new_line_count;
+                if new_line_count > longest_line_count:
+                    longest_line_count = new_line_count;
 
                 completed_code_buffer.append(full_code);
 
 
 
-        self.max_line_length_dict[file_name] = longest_line;
+        self.max_line_count_dict[file_name] = longest_line_count;
         return completed_code_buffer;
 
 
@@ -261,9 +261,9 @@ class videogit:
         print(f"\nCreating video for {colored(clean_file_name, 'green')}:");
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images out
-            longest_line = self.max_line_length_dict[file_name];
+            longest_line_count = self.max_line_count_dict[file_name];
             new_line_count = code.count("\n");
-            extra_lines_needed = longest_line - new_line_count;
+            extra_lines_needed = longest_line_count - new_line_count;
             while extra_lines_needed > 0:
                 code += "\n";
                 extra_lines_needed -=1;
