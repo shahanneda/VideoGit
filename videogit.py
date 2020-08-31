@@ -14,11 +14,6 @@ import shutil
 get_log_command = "git log --pretty=format:\"%h %s\"";
 batcmd="git status"
 
-wpm = 480;
-chars_per_second = wpm * 5 / 60; #5 char/word * 1min/60sec
-up_down_space = 20;
-max_line_length = 140;
-frame_rate = 30;
 
 class ncodevideo:
     def setup_silicon_command(self):
@@ -42,7 +37,7 @@ class ncodevideo:
             raise NotADirectoryError(string)
         
     def handle_args(self):
-        parser = argparse.ArgumentParser(description='Converts git commits, to a beautiful animated video. To get started type "videogit -l"', 
+        parser = argparse.ArgumentParser(description=f'Converts git commits, to a beautiful animated video. To get started type {colored("videogit -l", "green")}', 
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter # to show the default values
                 );
 
@@ -50,15 +45,26 @@ class ncodevideo:
         parser.add_argument('-l','--list-git-commits',nargs=0, action=ListGitCommitsAction, help='list your recent commits and hashes')
         parser.add_argument('inital_commit', type=str, help='the hash of the commit to start the video at')
         parser.add_argument('final_commit', type=str, nargs='?', default="the most recent commit", help='the hash of the commit to end the video at, if not specified will use the HEAD')
+        parser.add_argument('-f','--files',type=str, nargs="+", help=f'a list of specific files to make the video, if not set will try to to make the video for all changed files, example: {colored("videogit <hash> -f file1.cpp file2.cpp", "green")})')
         parser.add_argument('-w','--wpm', type=int, default="480", help='the speed of the video in words per minute')
-        parser.add_argument('-f','--frame-rate', type=int, default="30", help='the framerate of the output video')
+        parser.add_argument('-r','--frame-rate', type=int, default="30", help='the framerate of the output video')
         parser.add_argument('-o','--output-dir', type=self.dir_path, default="current directory", help='the directory of the output videos')
         parser.add_argument('-u','--up-down-space', type=int, default="20", help='how many lines above and bellow the current editing line to include in the video')
+        parser.add_argument('-m','--max_line_length', type=int, default="120", help='the maximum line length in chars before wrapping the text')
 
         args = parser.parse_args()
-        
+
+        wpm = args.wpm;
+        self.chars_per_second = wpm * 5 / 60; #5 char/word * 1min/60sec
+
+        self.frame_rate = args.frame_rate
+        self.max_line_length = args.max_line_length;
+        self.up_down_space = args.up_down_space;
+        self.files = args.files;
+
         commit1 = args.inital_commit;
         commit2 = args.final_commit;
+
         if(commit2 == "the most recent commit"):
             cprint("final commit not specified, using the most recent commit", "white");
             try:
@@ -85,6 +91,13 @@ class ncodevideo:
             sys.exit();
         file_paths = list(filter(None, file_paths)) # remove empty strings
 
+
+        # remove any paths the user does not specify
+        print(file_paths, self.files);
+        if self.files is not None:
+            file_paths = [file_path for file_path in file_paths if file_path in self.files];
+
+        print(file_paths);
         self.setup_temp_path();
         self.setup_silicon_command();
         self.find_and_go_through_commits(commit1, commit2, file_paths);
@@ -105,7 +118,7 @@ class ncodevideo:
                     diff_of_file = self.run_system_command(f"git diff -U999999 {commit}..{all_commits[i+1]} {file_path}") # the -U is to make sure we get the entire file
                     completed_code_buffer += self.handle_file_diffs(diff_of_file, file_name)
                 except:
-                    print("Failed to open file: " + file_path);
+                    cprint("Failed to open file: " + file_path, "red");
                     continue;
 
             try:
@@ -123,11 +136,11 @@ class ncodevideo:
 
         # handle very long line wrapping
         for i, line in enumerate(lines_of_diffs):
-            if len(line) > max_line_length:
+            if len(line) > self.max_line_length:
                 first_non_whitespace = len(line) - len(line.lstrip());
                 white_space = line[:first_non_whitespace];
-                after_wrap = line[max_line_length:];
-                lines_of_diffs[i] = f"{line[:max_line_length]}\n{white_space}{after_wrap}"; # add the lien wrap
+                after_wrap = line[self.max_line_length:];
+                lines_of_diffs[i] = f"{line[:self.max_line_length]}\n{white_space}{after_wrap}"; # add the lien wrap
 
         lines_without_diff = lines_of_diffs;
         changed_lines_dict = {}; # we need to store this so we can add them later
@@ -168,12 +181,12 @@ class ncodevideo:
         completed_code_buffer = [];
         longest_line = 0;
 
-        frames_per_char = frame_rate / chars_per_second;
+        frames_per_char = self.frame_rate / self.chars_per_second;
 
-        real_frame_rate = frame_rate/ frames_per_char;
-        print(f" framerate: {frame_rate}, frames_per_char: {frames_per_char} chars_per_second: {chars_per_second} real_frame_rate: {real_frame_rate}");
+        real_frame_rate = self.frame_rate/ frames_per_char;
+        # print(f" framerate: {self.frame_rate}, frames_per_char: {frames_per_char} self.chars_per_second: {self.chars_per_second} real_frame_rate: {real_frame_rate}");
         for line_number, line in lines_to_be_added.items():
-            # number_of_frames_needed = int((len(line) / chars_per_second) * frame_rate); # how many frames needed to add/remove line
+            # number_of_frames_needed = int((len(line) / self.chars_per_second) * self.frame_rate); # how many frames needed to add/remove line
             # for i in range(0,number_of_frames_needed, math.ceil(frames_per_char)):
             while len(line) > 0:
                 if line_number in indices_of_lines_to_be_removed: # check if its marked to be removed
@@ -200,7 +213,7 @@ class ncodevideo:
                         line = line[1:] # remove first char since we already addded it
 
                 full_code = list(filter(None, file_in_list_form)) # remove the "" marker used before
-                full_code = full_code[max(0, (line_number - up_down_space)):(line_number + up_down_space)]; # only show the seciton we are changing, not the entire file
+                full_code = full_code[max(0, (line_number - self.up_down_space)):(line_number + self.up_down_space)]; # only show the seciton we are changing, not the entire file
 
 
                 full_code = "\n".join(full_code); # add newlines and make it in to string
@@ -225,9 +238,9 @@ class ncodevideo:
 
 
     def convert_completed_code_to_video(self, completed_code_buffer, file_name):
-        frames_per_char = frame_rate / chars_per_second;
+        frames_per_char = self.frame_rate / self.chars_per_second;
 
-        real_frame_rate = frame_rate / frames_per_char;
+        real_frame_rate = self.frame_rate / frames_per_char;
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images
             # new_line_count = code.count("\n");
@@ -239,11 +252,11 @@ class ncodevideo:
 
             #progress bar
             sys.stdout.write('\r');
-            max_size = 100;
+            max_size = 80;
             progress = int(max_size * float(i/len(completed_code_buffer)));
             bar = "█" * progress;
             bar = bar + "-" * (max_size-progress);
-            sys.stdout.write(f"{file_name}: Creating Image {i} of {len(completed_code_buffer)} *** [{bar}]");
+            sys.stdout.write(f"Creating video for {file_name}: Creating Image {i} of {len(completed_code_buffer)} *** [{bar}]");
             sys.stdout.flush();
 
         self.convert_images_to_video(file_name, real_frame_rate=real_frame_rate );
@@ -252,9 +265,8 @@ class ncodevideo:
 
     def convert_images_to_video(self, file_name, real_frame_rate):
 
-        print(self.run_system_command("pwd"));
         # real framrate is the input framereate, while the -r is the output
-        self.run_system_command(f"ffmpeg -framerate {real_frame_rate} -f image2 -s 1920x1080 -i {self.temp_location}/{file_name}%d.png -vcodec libx264 -crf 20 -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p -r {frame_rate} -s 1920x1080 {self.output_dir}/{file_name}.mp4 -y -progress --nostats");
+        self.run_system_command(f"ffmpeg -framerate {real_frame_rate} -f image2 -s 1920x1080 -i {self.temp_location}/{file_name}%d.png -vcodec libx264 -crf 20 -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p -r {self.frame_rate} -progress -hide_banner -nostats -s 1920x1080 {self.output_dir}/{file_name}.mp4 -y ", silent=True);
 
         # self.run_system_command(f"ffmpeg -framerate 1 -y -pattern_type glob -i '{self.temp_location}/{file_name}*.png' -c:v libx264 -r 30 -pix_fmt yuv420p -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" {self.temp_location}/{file_name}.mp4");
         # ffmpeg.input(f'{self.temp_location}/{file_name}*.png', pattern_type='glob', framerate=1).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
