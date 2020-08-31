@@ -65,13 +65,13 @@ class videogit:
         self.files = args.files;
         self.verbose = args.verbose;
 
-        commit1 = args.inital_commit;
-        commit2 = args.final_commit;
+        commit1 = args.inital_commit.strip();
+        commit2 = args.final_commit.strip();
 
         if(commit2 == "the most recent commit"):
             cprint(center_wrap("final commit not specified, using the most recent commit"), "white");
             try:
-               commit2 = self.run_system_command("git rev-parse --short HEAD");
+               commit2 = self.run_system_command("git rev-parse --short HEAD").strip();
             except:
                 throw_git_not_found_error();
         
@@ -79,6 +79,10 @@ class videogit:
                 self.output_dir = ".";
         else:
                 self.output_dir = args.output_dir;
+
+        if commit1 == commit2:
+            cprint(center_wrap("Error: Starting and Ending commit the same! Try moving your starting commit back by one."), "red");
+            print(center_wrap(f"{colored('Run ', 'green')}videogit -l {colored('to get a list of commits and their hashes.', 'green')} "));
 
         return (commit1, commit2);
 
@@ -98,10 +102,10 @@ class videogit:
         # remove any paths the user does not specify
         if self.files is not None:
             file_paths = [file_path for file_path in file_paths if file_path in self.files];
+            for file in self.files:
+                if file not in file_paths:
+                    print(center_wrap(f"{colored('Warning: File', 'yellow')} {file} {colored('not found! Make sure file exists in git history, and you specified the right path/name to the file, relative to your git directory', 'yellow')}"));
 
-        for file in self.files:
-            if file not in file_paths:
-                print(center_wrap(f"{colored('Warning: File', 'yellow')} {file} {colored('not found! Make sure file exists in git history, and you specified the right path/name to the file, relative to your git directory', 'yellow')}"));
 
             
         self.setup_temp_path();
@@ -235,6 +239,7 @@ class videogit:
                 if new_line_count > longest_line:
                     longest_line = new_line_count;
 
+                print(file_name);
                 completed_code_buffer.append(full_code);
 
 
