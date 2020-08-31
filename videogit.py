@@ -26,8 +26,8 @@ class videogit:
         
 
     def run_system_command(self, command, silent=False):
-        if silent:
-            return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL)
+        # if silent:
+        #     return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL)
         return subprocess.check_output(command, shell=True, text=True)
 
     def dir_path(self, string): # this is just for argparse
@@ -68,6 +68,11 @@ class videogit:
         commit1 = args.inital_commit.strip();
         commit2 = args.final_commit.strip();
 
+        if args.git_repo_directory is not "current directory":
+            self.run_system_command(f"cd {args.git_repo_directory}");
+            os.chdir(args.git_repo_directory)
+            
+
         if(commit2 == "the most recent commit"):
             cprint(center_wrap("final commit not specified, using the most recent commit"), "white");
             try:
@@ -87,7 +92,7 @@ class videogit:
         return (commit1, commit2);
 
     def __init__(self):
-        cprint(center_wrap("\n\n-------- VideoGit --------"), "blue", end="\n\n" );
+        cprint(center_wrap("\n\n-------- VideoGit --------"), "cyan", end="\n\n" );
         (commit1, commit2) =  self.handle_args();
         find_changed_file_paths = f"git diff --name-only {commit1}..{commit2}";
         try:
@@ -98,6 +103,8 @@ class videogit:
             sys.exit();
         file_paths = list(filter(None, file_paths)) # remove empty strings
 
+        if self.verbose:
+            print("File paths before user filter: ", file_paths);
 
         # remove any paths the user does not specify
         if self.files is not None:
@@ -106,10 +113,11 @@ class videogit:
                 if file not in file_paths:
                     print(center_wrap(f"{colored('Warning: File', 'yellow')} {file} {colored('not found! Make sure file exists in git history, and you specified the right path/name to the file, relative to your git directory', 'yellow')}"));
 
+        if self.verbose:
+            print("File paths after user filter: ", file_paths);
 
             
         self.setup_temp_path();
-        self.setup_silicon_command();
         self.find_and_go_through_commits(commit1, commit2, file_paths);
 
 
@@ -191,7 +199,6 @@ class videogit:
 
 
     def handle_file_incrementing(self, file_in_list_form, lines_to_be_added, indices_of_lines_to_be_removed, file_name):
-        self.clean_temp_directory();
         index_of_images = 0; # for creating the video frames
         index_of_images+=1;
         completed_code_buffer = [];
@@ -255,8 +262,9 @@ class videogit:
 
 
     def convert_completed_code_to_video(self, completed_code_buffer, file_name, clean_file_name):
+        self.clean_temp_directory();
+        self.setup_silicon_command();
         frames_per_char = self.frame_rate / self.chars_per_second;
-
         real_frame_rate = self.frame_rate / frames_per_char;
         print(f"\nCreating video for {colored(clean_file_name, 'green')}:");
         for i, code in enumerate(completed_code_buffer):
@@ -300,6 +308,7 @@ class videogit:
     def make_image_from_code(self, code, file_name, index_of_image, number_of_copies=1): # index is for the video file
         
         extension =  file_name.split(".")[-1]; # get the file extension
+        print(self.temp_location);
         with open(f"{self.temp_location}/temp_code.txt", "w") as text_file:
             print(code, file=text_file, end="")
         self.run_system_command(f"{self.silicon_command}/{file_name}{index_of_image}.png --language {extension}"); # make master copy
@@ -312,10 +321,15 @@ class videogit:
 
     def clean_temp_directory(self):
         try:
+            self.temp_dir_object.cleanup();
+            shutil.rmtree(self.temp_dir_object.name);
+        except Exception as e:
             pass;
-            # self.temp_dir_object.cleanup();
-        except:
-            pass;
+
+        self.temp_dir_object = tempfile.TemporaryDirectory();
+        self.temp_location = self.temp_dir_object.name;
+        if(self.verbose):
+            print("Temp location: ",self.temp_location);
 
 
 
