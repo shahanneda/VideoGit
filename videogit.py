@@ -26,8 +26,8 @@ class videogit:
         
 
     def run_system_command(self, command, silent=False):
-        # if silent:
-        #     return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL)
+        if silent:
+            return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL)
         return subprocess.check_output(command, shell=True, text=True)
 
     def dir_path(self, string): # this is just for argparse
@@ -89,6 +89,8 @@ class videogit:
             cprint(center_wrap("Error: Starting and Ending commit the same! Try moving your starting commit back by one."), "red");
             print(center_wrap(f"{colored('Run ', 'green')}videogit -l {colored('to get a list of commits and their hashes.', 'green')} "));
 
+        if self.verbose:
+            print("selected commits: ", commit1, commit2);
         return (commit1, commit2);
 
     def __init__(self):
@@ -97,8 +99,10 @@ class videogit:
         find_changed_file_paths = f"git diff --name-only {commit1}..{commit2}";
         try:
             file_paths = str.split(self.run_system_command(find_changed_file_paths, silent=True), "\n");
-        except:
+        except Exception as e:
             cprint("\n\nGit Diff Failed!! Make sure there is a git repo, or try checking the hash(es) of the commit(s)", "red");
+            if self.verbose:
+                cprint(e, "red");
             print("type " +colored("videogit -l","blue") + " for a list of possible hashes\n\n");
             sys.exit();
         file_paths = list(filter(None, file_paths)) # remove empty strings
@@ -139,8 +143,10 @@ class videogit:
                 try:
                     diff_of_file = self.run_system_command(f"git diff -U999999 {commit}..{all_commits[i+1]} {file_path}") # the -U is to make sure we get the entire file
                     completed_code_buffer += self.handle_file_diffs(diff_of_file, prefile_text + file_name)
-                except:
+                except Exception as e:
                     cprint("Failed to open file: " + file_path, "red");
+                    if self.verbose:
+                        cprint(e, "red");
                     continue;
 
             try:
@@ -150,13 +156,14 @@ class videogit:
                 sys.exit(0);
             except Exception as e:
                 if self.verbose:
-                    print(e);
-                print(f"Could not create video for {file_name}");
+                    cprint(e, "red");
+                print(f"Could not create video for {file_name}, try running with the -v flag to debug");
 
 
     def handle_file_diffs(self, diff_of_file, file_name):
         lines_of_diffs = str.split(diff_of_file, "\n");
         lines_of_diffs = lines_of_diffs[5:] # remove the first 3 lines, becuase its just location info
+        if "\ No newline at end of file" in lines_of_diffs: lines_of_diffs.remove("\ No newline at end of file");
 
         # handle very long line wrapping
         for i, line in enumerate(lines_of_diffs):
@@ -202,7 +209,10 @@ class videogit:
         index_of_images = 0; # for creating the video frames
         index_of_images+=1;
         completed_code_buffer = [];
-        longest_line_count = 0;
+
+        longest_line_count = 0
+        if file_name in self.max_line_count_dict:
+            longest_line_count = self.max_line_count_dict[file_name];
 
         frames_per_char = self.frame_rate / self.chars_per_second;
 
@@ -269,9 +279,9 @@ class videogit:
         print(f"\nCreating video for {colored(clean_file_name, 'green')}:");
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images out
-            longest_line_count = self.max_line_count_dict[file_name];
+            # longest_line_count = self.max_line_count_dict[file_name];
             new_line_count = code.count("\n");
-            extra_lines_needed = longest_line_count - new_line_count;
+            extra_lines_needed = self.up_down_space*2 - new_line_count;
             while extra_lines_needed > 0:
                 code += "\n";
                 extra_lines_needed -=1;
@@ -308,7 +318,6 @@ class videogit:
     def make_image_from_code(self, code, file_name, index_of_image, number_of_copies=1): # index is for the video file
         
         extension =  file_name.split(".")[-1]; # get the file extension
-        print(self.temp_location);
         with open(f"{self.temp_location}/temp_code.txt", "w") as text_file:
             print(code, file=text_file, end="")
         self.run_system_command(f"{self.silicon_command}/{file_name}{index_of_image}.png --language {extension}"); # make master copy
