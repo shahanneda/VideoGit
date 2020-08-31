@@ -20,6 +20,9 @@ class videogit:
     def setup_temp_path(self):
         self.temp_dir_object = tempfile.TemporaryDirectory();
         self.temp_location = self.temp_dir_object.name
+        if self.verbose:
+            print("Temp location: ", self.temp_location);
+
         
 
     def run_system_command(self, command, silent=False):
@@ -49,7 +52,7 @@ class videogit:
         parser.add_argument('-o','--output-dir', type=self.dir_path, default="current directory", help='the directory of the output videos')
         parser.add_argument('-u','--up-down-space', type=int, default="20", help='how many lines above and below the current editing line to include in the video')
         parser.add_argument('-m','--max_line_length', type=int, default="120", help='the maximum line length in chars before wrapping the text')
-        parser.add_argument('-v', '--verbose', type=bool, default=False, help='print any errors or logging information');
+        parser.add_argument('-v', '--verbose', default=False, action='store_true', help='print any errors or logging information');
 
         args = parser.parse_args()
 
@@ -185,7 +188,8 @@ class videogit:
         frames_per_char = self.frame_rate / self.chars_per_second;
 
         real_frame_rate = self.frame_rate/ frames_per_char;
-        # print(f" framerate: {self.frame_rate}, frames_per_char: {frames_per_char} self.chars_per_second: {self.chars_per_second} real_frame_rate: {real_frame_rate}");
+        if self.verbose:
+            print(f" framerate: {self.frame_rate}, frames_per_char: {frames_per_char} self.chars_per_second: {self.chars_per_second} real_frame_rate: {real_frame_rate}");
         for line_number, line in lines_to_be_added.items():
             # number_of_frames_needed = int((len(line) / self.chars_per_second) * self.frame_rate); # how many frames needed to add/remove line
             # for i in range(0,number_of_frames_needed, math.ceil(frames_per_char)):
