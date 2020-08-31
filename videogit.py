@@ -246,7 +246,7 @@ class videogit:
         frames_per_char = self.frame_rate / self.chars_per_second;
 
         real_frame_rate = self.frame_rate / frames_per_char;
-        print(f"\nCreating video for {clean_file_name}:");
+        print(f"\nCreating video for {colored(clean_file_name, 'green')}:");
         for i, code in enumerate(completed_code_buffer):
             # add any extra line breaks needed to even  all images
             # new_line_count = code.count("\n");
@@ -261,11 +261,14 @@ class videogit:
             sys.stdout.write('\r');
             max_size = 80;
             progress = int(max_size * float(i/len(completed_code_buffer)));
-            bar = "█" * progress;
-            bar = bar + "-" * (max_size-progress);
+            bar = colored("█" * progress, "green");
+            bar = bar + colored("█" * (max_size-progress), "white" );
             sys.stdout.write(f"Creating Image {i} of {len(completed_code_buffer)} *** [{bar}]");
             sys.stdout.flush();
 
+        sys.stdout.write('\r');
+        sys.stdout.write('Creating video from image files using ffmpeg.\n');
+        sys.stdout.flush();
         self.convert_images_to_video(file_name, real_frame_rate=real_frame_rate );
         self.clean_temp_directory();
     # def handle_image_creation_add_line(self, line:
