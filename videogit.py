@@ -93,11 +93,9 @@ class ncodevideo:
 
 
         # remove any paths the user does not specify
-        print(file_paths, self.files);
         if self.files is not None:
             file_paths = [file_path for file_path in file_paths if file_path in self.files];
 
-        print(file_paths);
         self.setup_temp_path();
         self.setup_silicon_command();
         self.find_and_go_through_commits(commit1, commit2, file_paths);
@@ -266,7 +264,7 @@ class ncodevideo:
     def convert_images_to_video(self, file_name, real_frame_rate):
 
         # real framrate is the input framereate, while the -r is the output
-        self.run_system_command(f"ffmpeg -framerate {real_frame_rate} -f image2 -s 1920x1080 -i {self.temp_location}/{file_name}%d.png -vcodec libx264 -crf 20 -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p -r {self.frame_rate} -progress -hide_banner -nostats -s 1920x1080 {self.output_dir}/{file_name}.mp4 -y ", silent=True);
+        self.run_system_command(f"ffmpeg -framerate {real_frame_rate} -f image2 -s 1920x1080 -i {self.temp_location}/{file_name}%d.png -vcodec libx264 -crf 20 -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" -pix_fmt yuv420p -r {self.frame_rate} -s 1920x1080 {self.output_dir}/{file_name}.mp4 -y ", silent=True);
 
         # self.run_system_command(f"ffmpeg -framerate 1 -y -pattern_type glob -i '{self.temp_location}/{file_name}*.png' -c:v libx264 -r 30 -pix_fmt yuv420p -vf \"crop=trunc(iw/2)*2:trunc(ih/2)*2\" {self.temp_location}/{file_name}.mp4");
         # ffmpeg.input(f'{self.temp_location}/{file_name}*.png', pattern_type='glob', framerate=1).filter_('pad', w='ceil(in_w/2)*2', h='ceil(in_h/2)*2').output(f"{output_loc}/{file_name}.mp4", pix_fmt="yuv420p" ).run(overwrite_output=True, quiet=False);
