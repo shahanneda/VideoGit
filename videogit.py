@@ -269,7 +269,10 @@ class videogit:
                         line = line[1:] # remove first char since we already addded it
 
                 full_code = list(filter(None, file_in_list_form)) # remove the "" marker used before
-                full_code = full_code[max(0, (line_number - self.up_down_space)):(line_number + self.up_down_space)]; # only show the seciton we are changing, not the entire file
+                start_of_page_adjustemt = max(self.up_down_space - line_number, 0); # if we cant use the stuff at the top, add it to the end of the page
+                full_code = full_code[max(0, (line_number - self.up_down_space)):(line_number + self.up_down_space + start_of_page_adjustemt)]; # only show the seciton we are changing, not the entire file
+
+                print(len(full_code)); 
 
 
                 full_code = "\n".join(full_code); # add newlines and make it in to string
