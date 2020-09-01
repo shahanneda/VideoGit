@@ -27,7 +27,7 @@ class videogit:
 
     def run_system_command(self, command, silent=False):
         if silent:
-            return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL)
+            return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return subprocess.check_output(command, shell=True, text=True)
 
     def dir_path(self, string): # this is just for argparse
@@ -83,7 +83,9 @@ class videogit:
         if(args.output_dir == "current directory"):
                 self.output_dir = ".";
         else:
-                self.output_dir = args.output_dir;
+                self.output_dir = args.output_dir; 
+                if args.output_dir[-1] == "/": # remove trailing slash
+                    self.output_dir = args.output_dir[:-1]
 
         if commit1 == commit2:
             cprint(center_wrap("Error: Starting and Ending commit the same! Try moving your starting commit back by one."), "red");
@@ -96,16 +98,32 @@ class videogit:
     def __init__(self):
         cprint(center_wrap("\n\n-------- VideoGit --------"), "cyan", end="\n\n" );
         (commit1, commit2) =  self.handle_args();
-        find_changed_file_paths = f"git diff --name-only {commit1}..{commit2}";
-        try:
-            file_paths = str.split(self.run_system_command(find_changed_file_paths, silent=True), "\n");
-        except Exception as e:
-            cprint("\n\nGit Diff Failed!! Make sure there is a git repo, or try checking the hash(es) of the commit(s)", "red");
-            if self.verbose:
-                cprint(e, "red");
-            print("type " +colored("videogit -l","blue") + " for a list of possible hashes\n\n");
-            sys.exit();
+
+        self.setup_temp_path();
+        self.find_and_go_through_commits(commit1, commit2);
+
+
+    def find_and_go_through_commits(self, starting_commit, ending_commit):
+        all_commits = [starting_commit];
+        all_commits += reversed(self.run_system_command(f"git rev-list --abbrev-commit --ancestry-path {starting_commit}..{ending_commit}").split("\n")[:-1])
+        file_paths = set();
+
+        for i, commit in enumerate(all_commits[:-1]):
+            find_changed_file_paths = f"git diff --name-only {starting_commit}..{all_commits[i+1]}";
+            try:
+                file_paths.update(str.split(self.run_system_command(find_changed_file_paths, silent=True), "\n"));
+            except Exception as e:
+                cprint("\n\nGit Diff Failed!! Make sure there is a git repo, or try checking the hash(es) of the commit(s)", "red");
+                if self.verbose:
+                    cprint(e, "red");
+                print("type " +colored("videogit -l","blue") + " for a list of possible hashes\n\n");
+                sys.exit();
+
+        file_paths = list(file_paths);
         file_paths = list(filter(None, file_paths)) # remove empty strings
+        print(file_paths);
+
+
 
         if self.verbose:
             print("File paths before user filter: ", file_paths);
@@ -120,17 +138,6 @@ class videogit:
         if self.verbose:
             print("File paths after user filter: ", file_paths);
 
-            
-        self.setup_temp_path();
-        self.find_and_go_through_commits(commit1, commit2, file_paths);
-
-
-    def find_and_go_through_commits(self, starting_commit, ending_commit, file_paths):
-        all_commits = [starting_commit];
-        all_commits += reversed(self.run_system_command(f"git rev-list --abbrev-commit --ancestry-path {starting_commit}..{ending_commit}").split("\n")[:-1])
-
-        self.max_line_count_dict = {}; # stores the maximum line length of each file, inroder to even the vidoe out
-
         self.loop_through_file_paths(file_paths, all_commits);
 
     def loop_through_file_paths(self, file_paths, all_commits):
@@ -141,7 +148,7 @@ class videogit:
 
             for i, commit in enumerate(all_commits[:-1]):
                 try:
-                    diff_of_file = self.run_system_command(f"git diff -U999999 {commit}..{all_commits[i+1]} {file_path}") # the -U is to make sure we get the entire file
+                    diff_of_file = self.run_system_command(f"git diff -U999999 {commit}..{all_commits[i+1]} -- {file_path}") # the -U is to make sure we get the entire file
                     completed_code_buffer += self.handle_file_diffs(diff_of_file, prefile_text + file_name)
                 except Exception as e:
                     cprint("Failed to open file: " + file_path, "red");
@@ -217,9 +224,6 @@ class videogit:
         index_of_images+=1;
         completed_code_buffer = [];
 
-        longest_line_count = 0
-        if file_name in self.max_line_count_dict:
-            longest_line_count = self.max_line_count_dict[file_name];
 
         frames_per_char = self.frame_rate / self.chars_per_second;
 
@@ -261,16 +265,11 @@ class videogit:
                 # print("\n\n\n\n" + full_code);
                 full_code = re.sub(r'@@(.*?)@@', "", full_code); # this regex is to remove the git hulls which are @@ int ... @@
 
-                # find longest line so we space all images evenly
-                new_line_count = full_code.count("\n"); 
-                if new_line_count > longest_line_count:
-                    longest_line_count = new_line_count;
 
                 completed_code_buffer.append(full_code);
 
 
 
-        self.max_line_count_dict[file_name] = longest_line_count;
         return completed_code_buffer;
 
 
