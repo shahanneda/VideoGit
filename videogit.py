@@ -171,6 +171,17 @@ class videogit:
                     cprint(e, "red");
                 cprint(f"Could not create video for {file_name}, try running with the -v flag to debug, however this is normal if the file got deleted, or was created in a later commit, so you can safely ignore this message.", "red");
 
+    def handle_line_wrap(self, line):
+        
+        first_non_whitespace = len(line) - len(line.lstrip());
+        white_space = line[:first_non_whitespace]; # the whitepsace before the line (we want the wraped text to match it)
+        after_wrap = line[self.max_line_length:]; # the text going on the next line
+
+        #recursivly wrap enough times untill all lines are under the limit
+        if len(after_wrap) > self.max_line_length:
+            after_wrap = self.handle_line_wrap(after_wrap);
+        return f"{line[:self.max_line_length]}\n{white_space}{after_wrap}";
+
 
     def handle_file_diffs(self, diff_of_file, file_name):
         lines_of_diffs = str.split(diff_of_file, "\n");
@@ -182,15 +193,10 @@ class videogit:
             pass;
         
 
-
-
         # handle very long line wrapping
         for i, line in enumerate(lines_of_diffs):
             if len(line) > self.max_line_length:
-                first_non_whitespace = len(line) - len(line.lstrip());
-                white_space = line[:first_non_whitespace];
-                after_wrap = line[self.max_line_length:];
-                lines_of_diffs[i] = f"{line[:self.max_line_length]}\n{white_space}{after_wrap}"; # add the lien wrap
+                lines_of_diffs[i] = self.handle_line_wrap(line); # add the lien wrap
 
         lines_without_diff = lines_of_diffs;
         changed_lines_dict = {}; # we need to store this so we can add them later
