@@ -42,11 +42,11 @@ class videogit:
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter # to show the default values
                 );
 
-        parser.add_argument('-d','--git-repo-directory', type=self.dir_path, default="current directory", help='the repo of your project')
         parser.add_argument('-l','--list-git-commits',nargs=0, action=ListGitCommitsAction, help='list your recent commits and hashes')
         parser.add_argument('inital_commit', type=str, help='the hash of the commit to start the video at')
         parser.add_argument('final_commit', type=str, nargs='?', default="the most recent commit", help='the hash of the commit to end the video at, if not specified will use the HEAD')
         parser.add_argument('-f','--files',type=str, nargs="+", help=f'a list of specific files to make the video, if not set will try to to make the video for all changed files, example: {colored("videogit <hash> -f file1.cpp file2.cpp", "green")})')
+        parser.add_argument('-d','--git-repo-directory', type=self.dir_path, default="current directory", help='the repo of your project, only needs to be set if it is diffrent than the current working directory')
         parser.add_argument('-w','--wpm', type=int, default="480", help='the speed of the video in words per minute')
         parser.add_argument('-r','--frame-rate', type=int, default="30", help='the framerate of the output video')
         parser.add_argument('-o','--output-dir', type=self.dir_path, default="current directory", help='the directory of the output videos')
@@ -115,7 +115,7 @@ class videogit:
             file_paths = [file_path for file_path in file_paths if file_path in self.files];
             for file in self.files:
                 if file not in file_paths:
-                    print(center_wrap(f"{colored('Warning: File', 'yellow')} {file} {colored('not found! Make sure file exists in git history, and you specified the right path/name to the file, relative to your git directory', 'yellow')}"));
+                    print(center_wrap(f"{colored('Warning: File', 'yellow')} {file} {colored('not found! Make sure file exists in git history, and you specified the right path/name to the file, relative to your git directory. This could also happen if this file did not change during the selected commit range.', 'yellow')}"));
 
         if self.verbose:
             print("File paths after user filter: ", file_paths);
@@ -157,7 +157,7 @@ class videogit:
             except Exception as e:
                 if self.verbose:
                     cprint(e, "red");
-                print(f"Could not create video for {file_name}, try running with the -v flag to debug, however this is normal if the file got delted, or was created in a later commit");
+                cprint(f"Could not create video for {file_name}, try running with the -v flag to debug, however this is normal if the file got deleted, or was created in a later commit, so you can safely ignore this message.", "red");
 
 
     def handle_file_diffs(self, diff_of_file, file_name):
@@ -309,7 +309,7 @@ class videogit:
         sys.stdout.write('Creating video from image files using ffmpeg.\n');
         sys.stdout.flush();
         self.convert_images_to_video(file_name, real_frame_rate=real_frame_rate );
-        cprint(f"Successfully created video for {clean_file_name}, path: {output_dir}/{file_name}.mp4\n\n","green");
+        cprint(f"Successfully created video for {clean_file_name}, path: {self.output_dir}/{file_name}.mp4\n\n","green");
         self.clean_temp_directory();
     # def handle_image_creation_add_line(self, line:
 
