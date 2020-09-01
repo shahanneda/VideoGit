@@ -26,8 +26,16 @@ class videogit:
         
 
     def run_system_command(self, command, silent=False):
+        # altrenative way of doing this method
+        # p = subprocess.Popen(command.split(" "),
+        #                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # stdout, stderr = p.communicate()
+        # if p.returncode != 0:
+        #   raise Exception(stderr)
+        #
+        # return stdout;
         if silent:
-            return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+            return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL)
         return subprocess.check_output(command, shell=True, text=True)
 
     def dir_path(self, string): # this is just for argparse
@@ -110,20 +118,17 @@ class videogit:
 
         for i, commit in enumerate(all_commits[:-1]):
             find_changed_file_paths = f"git diff --name-only {starting_commit}..{all_commits[i+1]}";
-            try:
-                file_paths.update(str.split(self.run_system_command(find_changed_file_paths, silent=True), "\n"));
-            except Exception as e:
-                cprint("\n\nGit Diff Failed!! Make sure there is a git repo, or try checking the hash(es) of the commit(s)", "red");
-                if self.verbose:
-                    cprint(e, "red");
-                print("type " +colored("videogit -l","blue") + " for a list of possible hashes\n\n");
-                sys.exit();
+            # try:
+            file_paths.update(str.split(self.run_system_command(find_changed_file_paths, silent=True), "\n"));
+            # except Exception as e:
+            #     cprint("\n\nGit Diff Failed!! Make sure there is a git repo, or try checking the hash(es) of the commit(s)", "red");
+            #     if self.verbose:
+            #         cprint(e, "red");
+            #     print("type " +colored("videogit -l","blue") + " for a list of possible hashes\n\n");
+            #     sys.exit();
 
         file_paths = list(file_paths);
         file_paths = list(filter(None, file_paths)) # remove empty strings
-        print(file_paths);
-
-
 
         if self.verbose:
             print("File paths before user filter: ", file_paths);
