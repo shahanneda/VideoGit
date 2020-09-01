@@ -157,13 +157,20 @@ class videogit:
             except Exception as e:
                 if self.verbose:
                     cprint(e, "red");
-                print(f"Could not create video for {file_name}, try running with the -v flag to debug");
+                print(f"Could not create video for {file_name}, try running with the -v flag to debug, however this is normal if the file got delted, or was created in a later commit");
 
 
     def handle_file_diffs(self, diff_of_file, file_name):
         lines_of_diffs = str.split(diff_of_file, "\n");
         lines_of_diffs = lines_of_diffs[5:] # remove the first 3 lines, becuase its just location info
-        if "\ No newline at end of file" in lines_of_diffs: lines_of_diffs.remove("\ No newline at end of file");
+
+        try: # remove this annoying message, if applicable
+            lines_of_diffs.remove("\\ No newline at end of file");
+        except:
+            pass;
+        
+
+
 
         # handle very long line wrapping
         for i, line in enumerate(lines_of_diffs):
@@ -302,6 +309,7 @@ class videogit:
         sys.stdout.write('Creating video from image files using ffmpeg.\n');
         sys.stdout.flush();
         self.convert_images_to_video(file_name, real_frame_rate=real_frame_rate );
+        cprint(f"Successfully created video for {clean_file_name}, path: {output_dir}/{file_name}.mp4\n\n","green");
         self.clean_temp_directory();
     # def handle_image_creation_add_line(self, line:
 
