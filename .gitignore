@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 
+ignore_examples/
 input-files/
 temp-img/
 # Distribution / packaging
