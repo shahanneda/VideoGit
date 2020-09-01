@@ -27,7 +27,7 @@ class videogit:
 
     def run_system_command(self, command, silent=False):
         if silent:
-            return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return subprocess.check_output(command, shell=True, text=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         return subprocess.check_output(command, shell=True, text=True)
 
     def dir_path(self, string): # this is just for argparse
