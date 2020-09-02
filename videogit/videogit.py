@@ -387,7 +387,9 @@ def throw_git_not_found_error():
      cprint("No Git Repo Found!!, try moving to a folder with a git repo, or setting your git repo directory with -d", "red");
 
 
-nv = videogit();
+if __name__ == "__main__":
+    nv = videogit();
 
 
-
+def run():
+    nv = videogit();
