@@ -1,6 +1,8 @@
 # VideoGit
 ## Converts git commit history, to a beautiful animated coding video.
 ## Installation
+<a href="http://example.com/" target="_blank">example</a>
+
 1. [Install Silicon with `brew install silicon` or `cargo install silicon`)](https://github.com/Aloxaf/silicon)
 2. [Install FFmpeg](https://ffmpeg.org/)
 3. Run `pip install videogit`
