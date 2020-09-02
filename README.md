@@ -8,9 +8,17 @@
 - Make sure you cd to the root directory containing your git repo. ( You should be able to run git commands like `git status` )
 - run `videogit -l` to view a list of your commits
 - pick and copy the hash of your starting commit, if you do not specify final commit hash, videogit will just make the video from your starting hash to the latest commit
-- run `videogit <starting_commmit_hash_here>` or `videogit <starting_commmit_hash_here> <final_commit_hash_here`>
+- run `videogit <starting_commmit_hash_here>` or `videogit <starting_commmit_hash_here> <final_commit_hash_here>` filling in the starting and ending hashes
 - run `videogit -h` for a full list of options
 
+## Example Usage
+- `videogit ba12dc8 -wpm 60 -r 24 -f main.py test.cpp include/test.h`
+  
+  Creates a 24 fps video from the commit ba12dc8 to the HEAD, at a typing speed of 60 wpm, for files `main.y`, `test.cpp`, and `include/test.h`
+ 
+- `videogit 5f7198d a06dcff -o output-dir` 
+
+  Creates a video from commit 5f7198d to commit a06dcff, for all files changed over that period, and outputs the videos to `output-dir`
 ## Example Videos
 
 ## All Options
