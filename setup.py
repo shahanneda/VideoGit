@@ -20,9 +20,12 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            'videogit=videogit:run',
-            'VideoGit=videogit:run',
+            'videogit=videogit.videogit:run',
+            'VideoGit=videogit.videogit:run',
         ]
     },
+    install_requires=[
+          'termcolor',
+    ],
     python_requires='>=3.6',
 )

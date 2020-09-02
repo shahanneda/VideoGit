@@ -104,6 +104,15 @@ class videogit:
         return (commit1, commit2);
 
     def __init__(self):
+        # check for needed commands
+        if not self.is_tool("ffmpeg"):
+            cprint("ffmpeg not installed! Please install ffmpeg(https://ffmpeg.org/), and make sure you can run ffmpen from the console.","red");
+            sys.exit();
+        if not self.is_tool("silicon"):
+            cprint("silicon not installed! Please install silicon(https://github.com/Aloxaf/silicon), and make sure you can run silicon from the console.","red");
+            sys.exit();
+
+
         cprint(center_wrap("\n\n-------- VideoGit --------"), "cyan", end="\n\n" );
         (commit1, commit2) =  self.handle_args();
 
@@ -357,6 +366,10 @@ class videogit:
         self.temp_location = self.temp_dir_object.name;
         if(self.verbose):
             print("Temp location: ",self.temp_location);
+
+    def is_tool(self, name):
+        from shutil import which
+        return which(name) is not None
 
 
 
