@@ -1,12 +1,19 @@
 # VideoGit
 ## Converts git commit history, to a beautiful animated coding video.
 ## Installation
-1. Install Silicon
-2. Install FFmpeg
+1. [Install Silicon with `brew install silicon` or `cargo install silicon`)](https://github.com/Aloxaf/silicon)
+2. [Install FFmpeg](https://ffmpeg.org/)
 3. Run `pip install videogit`
-# Usage
+## Usage
+- Make sure you cd to the root directory containing your git repo. ( You should be able to run git commands like `git status` )
+- run `videogit -l` to view a list of your commits
+- pick and copy the hash of your starting commit, if you do not specify final commit hash, videogit will just make the video from your starting hash to the latest commit
+- run `videogit <starting_commmit_hash_here>` or `videogit <starting_commmit_hash_here> <final_commit_hash_here`>
+- run `videogit -h` for a full list of options
 
-## Usage Help
+## Example Videos
+
+## All Options
 ```
                             -------- VideoGit --------                          
 
