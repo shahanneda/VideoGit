@@ -20,6 +20,7 @@
 
   Creates a video from commit 5f7198d to commit a06dcff, for all files changed over that period, and outputs the videos to `output-dir`
 ## Example Videos
+[![Video Git Demo](https://img.youtube.com/vi/872y0LlQmGg/0.jpg)](https://www.youtube.com/watch?v=872y0LlQmGg)
 
 ## All Options
 ```
