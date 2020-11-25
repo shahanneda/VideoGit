@@ -69,3 +69,7 @@ optional arguments:
   -v, --verbose         print any errors or logging information (default:
                         False)
 ```
+
+
+## Contributing
+Feel free to make any pull requests with new features or fixes.
